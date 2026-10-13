@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+:root{--fond:#f2f4f6;--carte:#fff;--texte:#152028;--doux:#5d6c78;--bord:#dce2e7;--accent:#e8731c;
+  --rouge:#d33a2f;--orange:#e8861c;--jaune:#d4ad0b;--vert:#2e9e5b;--rouge-f:#fdecea;--orange-f:#fdf1e3;--jaune-f:#fcf7dd;--vert-f:#e7f5ec}
+@media (prefers-color-scheme:dark){:root{--fond:#0e161c;--carte:#17222a;--texte:#e7edf1;--doux:#97a8b4;--bord:#2a3843;
+  --rouge-f:#3a1f1d;--orange-f:#3a2a18;--jaune-f:#352f14;--vert-f:#173022}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fond);color:var(--texte);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:#152028;color:#fff;padding:12px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+header h1{font-size:17px;margin:0;flex:1}
+header small{opacity:.7;font-weight:400}
+main{max-width:1150px;margin:0 auto;padding:14px 16px 40px;display:grid;gap:14px}
+@media(min-width:900px){main{grid-template-columns:380px 1fr}.large{grid-column:1/-1}}
+.carte{background:var(--carte);border:1px solid var(--bord);border-radius:12px;padding:14px}
+h2{font-size:15px;margin:0 0 10px}
+h3{margin:0 0 6px}
+button{font:inherit;border:1px solid var(--bord);background:var(--carte);color:var(--texte);border-radius:8px;padding:9px 12px;cursor:pointer}
+button.prim{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button.danger{background:var(--rouge);border-color:var(--rouge);color:#fff;font-weight:600}
+header button{background:transparent;color:#fff;border-color:#3b4b57}
+header button.danger{background:var(--rouge);border-color:var(--rouge)}
+input,select,textarea{font:inherit;width:100%;padding:9px 10px;border:1px solid var(--bord);border-radius:8px;background:var(--fond);color:var(--texte)}
+label{display:block;font-size:13px;color:var(--doux);margin-bottom:8px}
+label input,label select,label textarea{margin-top:3px;color:var(--texte)}
+.ligne{display:flex;gap:8px;align-items:flex-end}.ligne>*{flex:1}.fin{justify-content:flex-end}.fin>*{flex:0 0 auto}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:700px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--carte);border:1px solid var(--bord);border-left:5px solid var(--doux);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font-size:24px}.kpi span{display:block;font-weight:600}.kpi small{color:var(--doux)}
+.k-rouge{border-left-color:var(--rouge)}.k-orange{border-left-color:var(--orange)}.k-jaune{border-left-color:var(--jaune)}.k-neutre{border-left-color:var(--accent)}
+.modes{display:flex;gap:6px;margin-bottom:10px}.modes button{flex:1}
+.modes button.actif{background:#152028;color:#fff;border-color:#152028}
+#code{font-size:18px;padding:12px}
+#lecteur{margin-top:10px;border-radius:8px;overflow:hidden}
+#retour{margin-top:10px}
+.msg{padding:9px 11px;border-radius:8px;font-size:14px}
+.ok{background:var(--vert-f)}.warn{background:var(--orange-f)}.err{background:var(--rouge-f)}
+.alerte{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:5px solid}
+.alerte p{margin:4px 0}.alerte small{color:var(--doux)}.alerte .act{display:flex;gap:6px;flex-wrap:wrap}
+.n-rouge{background:var(--rouge-f);border-color:var(--rouge)}.n-orange{background:var(--orange-f);border-color:var(--orange)}
+.n-jaune{background:var(--jaune-f);border-color:var(--jaune)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--doux);font-weight:600;font-size:12px;border-bottom:1px solid var(--bord);padding:6px}
+td{border-bottom:1px solid var(--bord);padding:7px 6px;vertical-align:top}
+td small{color:var(--doux)}
+.tab{overflow-x:auto}
+.pastille{display:inline-block;width:10px;height:10px;border-radius:50%}
+.p-rouge{background:var(--rouge)}.p-orange{background:var(--orange)}.p-jaune{background:var(--jaune)}.p-vert{background:var(--vert)}
+.vide{color:var(--doux);margin:4px 0}
+.filtres{display:flex;gap:10px;align-items:center;margin-bottom:8px}.filtres label{margin:0;white-space:nowrap}.filtres input[type=checkbox]{width:auto}
+dialog{border:none;border-radius:14px;padding:18px;width:min(520px,94vw);background:var(--carte);color:var(--texte)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+fieldset{border:1px solid var(--bord);border-radius:8px;margin:0 0 8px;padding:8px 10px;max-height:190px;overflow:auto}
+fieldset label{display:flex;gap:8px;align-items:center;color:var(--texte);margin:4px 0}fieldset input{width:auto;margin:0}
+.aide{color:var(--doux);font-size:13px;margin:0 0 10px}
+.liens a{display:inline-block;margin:4px 6px 0 0;padding:6px 10px;border-radius:8px;background:var(--fond);color:var(--texte);text-decoration:none;border:1px solid var(--bord)}
+#ecranPin{max-width:320px;margin:15vh auto;padding:0 16px;text-align:center}
+#ecranPin input{text-align:center;font-size:24px;letter-spacing:6px;margin:12px 0}
+</style>
+</head>
+<body>
+
+<div id="ecranPin">
+  <h2>🔧 Stock TECH'AUTO</h2>
+  <form id="fPin"><input id="pin" type="password" inputmode="numeric" placeholder="Code PIN" autofocus><button class="prim" style="width:100%">Entrer</button></form>
+  <div id="pinMsg"></div>
+</div>
+
+<div id="app" hidden>
+  <header>
+    <h1>🔧 Stock TECH'AUTO <small id="maj"></small></h1>
+    <button id="btnSync" title="Relire le planning des RDV">🔄 Actualiser</button>
+    <button id="btnUrgence" class="danger">🚨 Urgence pièce</button>
+  </header>
+  <main>
+    <section class="kpis large" id="kpis"></section>
+
+    <section class="carte" id="scan">
+      <h2>Scanner une pièce</h2>
+      <div class="modes">
+        <button type="button" data-mode="Entrée" class="actif">⬇️ Entrée</button>
+        <button type="button" data-mode="Sortie">⬆️ Sortie</button>
+        <button type="button" data-mode="Inventaire">🔢 Comptage</button>
+      </div>
+      <form id="fScan">
+        <input id="code" placeholder="Bipez ou tapez le code / la référence" autocomplete="off">
+        <div class="ligne" style="margin-top:8px">
+          <label><span id="lQte">Quantité reçue</span><input id="qte" type="number" step="0.5" min="0" value="1"></label>
+          <label id="blocRdv" hidden>Réf. RDV (option)<input id="refRdv" placeholder="TA-…"></label>
+        </div>
+        <div class="ligne"><button type="submit" class="prim">Valider</button><button type="button" id="btnCam">📷 Caméra</button></div>
+      </form>
+      <div id="lecteur"></div>
+      <div id="retour"></div>
+    </section>
+
+    <section class="carte">
+      <h2>À commander / à surveiller</h2>
+      <div id="aCommander"></div>
+    </section>
+
+    <section class="carte large">
+      <h2>Pièces réservées pour les RDV (14 jours)</h2>
+      <div class="tab" id="reservations"></div>
+    </section>
+
+    <section class="carte large">
+      <h2>Commandes en cours</h2>
+      <div class="tab" id="commandes"></div>
+    </section>
+
+    <section class="carte large">
+      <h2>Stock</h2>
+      <div class="filtres">
+        <input id="recherche" placeholder="Rechercher une pièce, une référence, un emplacement…">
+        <label><input type="checkbox" id="filtreAlerte"> alertes seulement</label>
+      </div>
+      <div class="tab" id="stock"></div>
+    </section>
+  </main>
+</div>
+
+<!-- Nouvelle pièce -->
+<dialog id="dPiece"><form id="fPiece">
+  <h3>➕ Nouvelle pièce</h3>
+  <p class="aide">Ce code n'est pas encore connu. Créez la fiche une fois : les prochains scans la reconnaîtront.</p>
+  <div class="ligne"><label>Référence*<input id="nRef" required placeholder="ex. FA-HILUX"></label><label>Code-barres<input id="nCb"></label></div>
+  <label>Désignation*<input id="nDes" required placeholder="ex. Filtre à air Toyota Hilux"></label>
+  <div class="ligne"><label>Catégorie<input id="nCat" placeholder="Filtre, Freinage…"></label><label>Emplacement<input id="nEmp" placeholder="Étagère B3"></label></div>
+  <div class="ligne"><label>Stock actuel<input id="nStock" type="number" step="0.5" min="0" value="0"></label><label>Unité<input id="nUnite" value="pce"></label><label>Seuil mini<input id="nSeuil" type="number" min="0" step="0.5" value="1"></label></div>
+  <div class="ligne"><label>Fournisseur<input id="nFour"></label><label>Origine<select id="nOrig"><option>Métropole</option><option>Local</option><option>Autre</option></select></label></div>
+  <div class="ligne"><label>Délai (jours)<input id="nDelai" type="number" min="0" placeholder="défaut"></label><label>Prix achat €<input id="nPrix" type="number" min="0" step="0.01"></label></div>
+  <div id="nRetour"></div>
+  <div class="ligne fin"><button type="button" data-fermer>Annuler</button><button class="prim">Créer la pièce</button></div>
+</form></dialog>
+
+<!-- Commande -->
+<dialog id="dCommande"><form id="fCommande">
+  <h3>🛒 Noter une commande</h3>
+  <p class="aide">Passez la commande chez le fournisseur comme d'habitude, puis notez-la ici : l'alerte tient compte de la date d'arrivée prévue. Au scan d'entrée, la commande se solde toute seule.</p>
+  <p id="cPiece"></p>
+  <div class="ligne"><label>Quantité<input id="cQte" type="number" min="0.5" step="0.5" required></label><label>Fournisseur<input id="cFour"></label></div>
+  <p class="aide" id="cArrivee"></p>
+  <div class="ligne fin"><button type="button" data-fermer>Annuler</button><button class="prim">Enregistrer</button></div>
+</form></dialog>
+
+<!-- Urgence -->
+<dialog id="dUrgence"><form id="fUrgence">
+  <h3>🚨 Pièce en urgence</h3>
+  <p class="aide">Un SMS part vers chaque confrère ou revendeur coché (onglet Contacts du tableau).</p>
+  <label>Pièce recherchée*<input id="uPiece" required></label>
+  <div class="ligne"><label>Quantité<input id="uQte" type="number" min="1" value="1"></label><label>Besoin pour<input id="uDate" type="date"></label></div>
+  <label>Véhicule<input id="uVehicule" placeholder="ex. Toyota Hilux 2.4 D 2019"></label>
+  <fieldset><legend>Qui contacter ?</legend><div id="uContacts"></div></fieldset>
+  <label>Message envoyé<textarea id="uMsg" rows="4"></textarea></label>
+  <div id="uRetour"></div>
+  <div class="ligne fin"><button type="button" data-fermer>Fermer</button><button class="danger" id="uEnvoyer">Envoyer les SMS</button></div>
+</form></dialog>
+
+<script>
+let PIN = '', T = null, MODE = 'Entrée', FICHE = null, lecteur = null, msgModifie = false;
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const EMO = {rouge:'🔴', orange:'🟠', jaune:'🟡', vert:'🟢'};
+const euros = n => Number(n || 0).toLocaleString('fr-FR') + ' €';
+
+function appel(fn, ...args) {
+  return new Promise((ok, ko) => google.script.run.withSuccessHandler(ok).withFailureHandler(ko)[fn](PIN, ...args));
+}
+function bip(ok) {
+  try { const a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator();
+    o.frequency.value = ok ? 880 : 220; o.connect(a.destination); o.start(); setTimeout(() => { o.stop(); a.close(); }, ok ? 120 : 350); } catch (e) {}
+}
+function retour(txt, classe) { $('#retour').innerHTML = `<div class="msg ${classe}">${esc(txt)}</div>`; }
+
+/* ---------- Connexion ---------- */
+$('#fPin').onsubmit = async e => {
+  e.preventDefault(); PIN = $('#pin').value.trim(); $('#pinMsg').textContent = 'Connexion…';
+  try { T = await appel('apiTableau'); demarrer(); }
+  catch (err) { $('#pinMsg').innerHTML = `<p class="msg err">${esc(err.message)}</p>`; }
+};
+function demarrer() {
+  try { sessionStorage.setItem('pinStock', PIN); } catch (e) {}
+  $('#ecranPin').hidden = true; $('#app').hidden = false; rendre(); $('#code').focus();
+  setInterval(() => { if (!document.querySelector('dialog[open]') && document.visibilityState === 'visible' && !lecteur) charger(); }, 120000);
+}
+(async () => { try { const p = sessionStorage.getItem('pinStock'); if (p) { PIN = p; T = await appel('apiTableau'); demarrer(); } } catch (e) {} })();
+
+async function charger(sync) {
+  try { T = await appel(sync ? 'apiSynchroniser' : 'apiTableau'); rendre(); } catch (err) { retour(err.message, 'err'); }
+}
+$('#btnSync').onclick = async () => { $('#btnSync').disabled = true; await charger(true); $('#btnSync').disabled = false; };
+
+/* ---------- Affichage ---------- */
+function rendre() {
+  $('#maj').textContent = '· mis à jour ' + T.maj + (T.mode === 'SIMULATION' ? ' · SMS en simulation' : '');
+  const k = T.kpi;
+  $('#kpis').innerHTML = [['rouge', k.rouge, 'Délai dépassé', 'dépannage local'], ['orange', k.orange, 'À commander', "aujourd'hui"],
+    ['jaune', k.jaune, 'À surveiller', 'stock bas / à prévoir'], ['neutre', euros(k.valeur), 'Valeur du stock', k.nb + ' références']]
+    .map(([c, v, t, s]) => `<div class="kpi k-${c}"><b>${esc(v)}</b><span>${t}</span><small>${esc(s)}</small></div>`).join('');
+
+  const alertes = T.fiches.filter(f => f.niveau !== 'vert');
+  $('#aCommander').innerHTML = alertes.length ? alertes.map(f => `<div class="alerte n-${f.niveau}">
+      <div><b>${EMO[f.niveau]} ${esc(f.designation)}</b> <small>${esc(f.ref)}${f.emplacement ? ' · ' + esc(f.emplacement) : ''}</small>
+        <p>${esc(f.message)}</p>
+        <small>Stock ${f.stock} · réservé ${f.reserve} · en commande ${f.enCommande} · ${esc(f.origine || 'origine ?')} ${f.delai} j${f.fournisseur ? ' · ' + esc(f.fournisseur) : ''}</small></div>
+      <div class="act">${f.aCommander > 0 ? `<button data-act="commander" data-ref="${esc(f.ref)}">🛒 Commander ${f.aCommander}</button>` : ''}
+        ${f.niveau === 'rouge' || f.niveau === 'orange' ? `<button class="danger" data-act="urgence" data-ref="${esc(f.ref)}">🚨 Urgence</button>` : ''}
+        ${!f.connue ? `<button data-act="creer" data-ref="${esc(f.ref)}">➕ Créer la fiche</button>` : ''}</div>
+    </div>`).join('') : '<p class="vide">✅ Rien à commander : toutes les réparations prévues sont couvertes.</p>';
+
+  $('#reservations').innerHTML = T.reservations.length ? `<table><tr><th>Date</th><th>RDV</th><th>Pièce</th><th>Qté</th><th>Couvert ?</th></tr>${
+    T.reservations.map(r => `<tr><td>${esc(r.date)}</td><td>${esc(r.rdv)}</td><td>${esc(r.designation)}<br><small>${esc(r.ref)}</small></td>
+      <td>${r.qte} ${esc(r.unite)}</td><td>${r.couvert ? '✅ en stock' : '❌ manquant'}</td></tr>`).join('')}</table>`
+    : '<p class="vide">Aucune pièce réservée. Renseignez la colonne « Pièces prévues » de l\'onglet RDV.</p>';
+
+  $('#commandes').innerHTML = T.commandes.length ? `<table><tr><th>Commandé le</th><th>Pièce</th><th>Qté</th><th>Fournisseur</th><th>Arrivée prévue</th></tr>${
+    T.commandes.map(c => `<tr><td>${esc(c.date)}</td><td>${esc(c.designation)}<br><small>${esc(c.ref)}</small></td><td>${c.qte}</td><td>${esc(c.fournisseur)}</td><td>${esc(c.arrivee)}</td></tr>`).join('')}</table>`
+    : '<p class="vide">Aucune commande en attente.</p>';
+  rendreStock();
+}
+function rendreStock() {
+  const q = $('#recherche').value.trim().toLowerCase(), seulAlertes = $('#filtreAlerte').checked;
+  const l = T.fiches.filter(f => f.connue && (!seulAlertes || f.niveau !== 'vert') &&
+    (!q || [f.ref, f.designation, f.codeBarres, f.emplacement, f.categorie, f.fournisseur].join(' ').toLowerCase().includes(q)));
+  $('#stock').innerHTML = l.length ? `<table><tr><th></th><th>Pièce</th><th>Empl.</th><th>Stock</th><th>Réservé</th><th>Dispo</th><th>Seuil</th><th>Délai</th></tr>${
+    l.map(f => `<tr><td><span class="pastille p-${f.niveau}"></span></td><td>${esc(f.designation)}<br><small>${esc(f.ref)}</small></td>
+      <td>${esc(f.emplacement)}</td><td>${f.stock} ${esc(f.unite)}</td><td>${f.reserve || ''}</td><td><b>${f.dispo}</b></td>
+      <td>${f.seuil}${f.seuilConseille && f.seuilConseille !== f.seuil ? `<br><small title="calculé sur la consommation des 90 derniers jours">conseillé ${f.seuilConseille}</small>` : ''}</td>
+      <td>${f.delai} j<br><small>${esc(f.origine)}</small></td></tr>`).join('')}</table>` : '<p class="vide">Aucune pièce trouvée.</p>';
+}
+$('#recherche').oninput = rendreStock; $('#filtreAlerte').onchange = rendreStock;
+
+/* ---------- Scan ---------- */
+document.querySelectorAll('.modes button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.modes button').forEach(x => x.classList.remove('actif'));
+  b.classList.add('actif'); MODE = b.dataset.mode;
+  $('#lQte').textContent = {Entrée: 'Quantité reçue', Sortie: 'Quantité sortie', Inventaire: 'Quantité comptée en rayon'}[MODE];
+  $('#blocRdv').hidden = MODE !== 'Sortie'; $('#code').focus();
+});
+$('#fScan').onsubmit = async e => {
+  e.preventDefault();
+  const code = $('#code').value.trim(); if (!code) return;
+  retour('…', 'ok');
+  try {
+    const r = await appel('apiScan', code, MODE, Number($('#qte').value), $('#refRdv').value.trim());
+    if (r.inconnu) { bip(false); retour('Code inconnu : ' + r.code, 'warn'); ouvrirNouvellePiece(r.code); return; }
+    bip(true); retour(r.message, r.niveau === 'vert' ? 'ok' : 'warn');
+    $('#code').value = ''; $('#qte').value = 1; T = r.tableau; rendre();
+  } catch (err) { bip(false); retour(err.message, 'err'); }
+  $('#code').focus();
+};
+$('#btnCam').onclick = async () => {
+  if (lecteur) { await lecteur.stop().catch(() => {}); lecteur = null; $('#lecteur').innerHTML = ''; return; }
+  if (!window.Html5Qrcode) return retour('Lecteur caméra non chargé : utilisez une douchette ou tapez la référence.', 'err');
+  lecteur = new Html5Qrcode('lecteur');
+  try {
+    await lecteur.start({facingMode: 'environment'}, {fps: 10, qrbox: {width: 260, height: 120}}, async txt => {
+      await lecteur.stop().catch(() => {}); lecteur = null; $('#lecteur').innerHTML = '';
+      $('#code').value = txt; $('#fScan').requestSubmit();
+    });
+  } catch (err) {
+    lecteur = null; $('#lecteur').innerHTML = '';
+    retour('Caméra inaccessible ici (' + err + '). Utilisez une douchette Bluetooth, ou tapez la référence.', 'err');
+  }
+};
+
+/* ---------- Boutons des alertes ---------- */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (b) {
+    const f = T.fiches.find(x => x.ref === b.dataset.ref);
+    if (b.dataset.act === 'commander') ouvrirCommande(f);
+    if (b.dataset.act === 'urgence') ouvrirUrgence(f);
+    if (b.dataset.act === 'creer') ouvrirNouvellePiece('', f.ref);
+  }
+  const fermer = e.target.closest('[data-fermer]'); if (fermer) { fermer.closest('dialog').close(); $('#code').focus(); }
+});
+
+/* ---------- Nouvelle pièce ---------- */
+function ouvrirNouvellePiece(code, ref) {
+  $('#fPiece').reset(); $('#nRetour').innerHTML = '';
+  $('#nCb').value = code || ''; $('#nRef').value = ref || '';
+  if (MODE === 'Entrée') $('#nStock').value = $('#qte').value || 0;
+  $('#dPiece').showModal(); (ref ? $('#nDes') : $('#nRef')).focus();
+}
+$('#fPiece').onsubmit = async e => {
+  e.preventDefault();
+  const o = {ref: $('#nRef').value, codeBarres: $('#nCb').value, designation: $('#nDes').value, categorie: $('#nCat').value, emplacement: $('#nEmp').value,
+    stock: $('#nStock').value, unite: $('#nUnite').value, seuil: $('#nSeuil').value, fournisseur: $('#nFour').value, origine: $('#nOrig').value,
+    delai: $('#nDelai').value, prix: $('#nPrix').value};
+  try { T = await appel('apiCreerPiece', o); rendre(); $('#dPiece').close(); $('#code').value = ''; retour('➕ Pièce créée : ' + o.designation, 'ok'); bip(true); $('#code').focus(); }
+  catch (err) { $('#nRetour').innerHTML = `<p class="msg err">${esc(err.message)}</p>`; }
+};
+
+/* ---------- Commande ---------- */
+function ouvrirCommande(f) {
+  FICHE = f; $('#cPiece').innerHTML = `<b>${esc(f.designation)}</b> <small>${esc(f.ref)}</small>`;
+  $('#cQte').value = f.aCommander || 1; $('#cFour').value = f.fournisseur;
+  $('#cArrivee').textContent = `Arrivée estimée dans ${f.delai} j + marge de sécurité (${f.origine || 'origine non précisée'}).`;
+  $('#dCommande').showModal();
+}
+$('#fCommande').onsubmit = async e => {
+  e.preventDefault();
+  try { T = await appel('apiCommander', FICHE.ref, Number($('#cQte').value), $('#cFour').value); rendre(); $('#dCommande').close(); retour('🛒 Commande notée : ' + FICHE.designation, 'ok'); }
+  catch (err) { alert(err.message); }
+};
+
+/* ---------- Urgence ---------- */
+function ouvrirUrgence(f) {
+  FICHE = f || null; msgModifie = false; $('#fUrgence').reset(); $('#uRetour').innerHTML = ''; $('#uEnvoyer').disabled = false;
+  if (f) { $('#uPiece').value = f.designation + (f.connue ? ' (réf. ' + f.ref + ')' : ''); $('#uQte').value = Math.ceil((f.manque && f.manque.qte) || f.aCommander || 1);
+    if (f.manque && f.manque.date) $('#uDate').value = f.manque.date; }
+  $('#uContacts').innerHTML = T.contacts.length ? T.contacts.map((c, i) => `<label><input type="checkbox" value="${i}" checked>
+      <span><b>${esc(c.nom)}</b> <small>${esc([c.type, c.marques, c.ville].filter(Boolean).join(' · '))}</small></span></label>`).join('')
+    : '<p class="vide">Aucun contact : remplissez l\'onglet Contacts du tableau.</p>';
+  majMsg(); $('#dUrgence').showModal();
+}
+function majMsg() {
+  if (msgModifie) return;
+  const d = $('#uDate').value, v = $('#uVehicule').value.trim();
+  $('#uMsg').value = `TECH'AUTO Kourou cherche en urgence : ${$('#uPiece').value.trim()} x${$('#uQte').value}${v ? ' pour ' + v : ''}, besoin ${d ? 'le ' + d.split('-').reverse().join('/') : 'au plus vite'}. Vous l'avez ? Rappelez-nous${T.telGarage ? ' au ' + T.telGarage : ''}. Merci !`;
+}
+['#uPiece', '#uQte', '#uDate', '#uVehicule'].forEach(s => $(s).addEventListener('input', majMsg));
+$('#uMsg').addEventListener('input', () => msgModifie = true);
+$('#fUrgence').onsubmit = async e => {
+  e.preventDefault();
+  const choix = [...document.querySelectorAll('#uContacts input:checked')].map(i => Number(i.value));
+  if (!choix.length) return alert('Cochez au moins un contact.');
+  if (!confirm(`Envoyer ce SMS à ${choix.length} contact(s) ?`)) return;
+  $('#uEnvoyer').disabled = true;
+  try {
+    const r = await appel('apiUrgence', {ref: FICHE ? FICHE.ref : '', piece: $('#uPiece').value, qte: $('#uQte').value, vehicule: $('#uVehicule').value,
+      besoin: $('#uDate').value, message: $('#uMsg').value, contacts: choix});
+    $('#uRetour').innerHTML = `<p class="msg ok">${esc(r.message)}</p><div class="liens">${r.liens.map(l => `<div><b>${esc(l.nom)}</b>
+      ${l.wa ? `<a href="${esc(l.wa)}" target="_blank">💬 WhatsApp</a>` : ''}${l.appel ? `<a href="${esc(l.appel)}">📞 Appeler</a>` : ''}</div>`).join('')}</div>`;
+  } catch (err) { $('#uRetour').innerHTML = `<p class="msg err">${esc(err.message)}</p>`; $('#uEnvoyer').disabled = false; }
+};
+$('#btnUrgence').onclick = () => ouvrirUrgence(null);
+</script>
+</body>
+</html>

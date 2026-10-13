@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TECH'AUTO · L'atelier qui anticipe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{
+  --bg:#eceff0; --surface:#fff; --sunk:#f4f6f6; --ink:#152028; --muted:#5a6a73; --line:#d3dadd;
+  --accent:#0b6b70; --accent-soft:#d6ebeb; --signal:#efb200; --signal-soft:#fbecd0;
+  --red:#b3261e; --red-soft:#f8dcda; --green:#2d7a31; --green-soft:#dcefdc; --orange:#e8861c;
+  --f-display:'Barlow Condensed','Arial Narrow',sans-serif; --f-body:'Barlow','Segoe UI',system-ui,sans-serif; --f-mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;background:#0e1418;color:var(--ink);font-family:var(--f-body);font-size:20px;line-height:1.4}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;line-height:1.05;margin:0;letter-spacing:.01em;text-wrap:balance}
+p{margin:0}
+ul,ol{margin:0;padding-left:1.1em}
+.mono{font-family:var(--f-mono)}
+
+/* ---------- Diaporama : toile 1280×720 mise à l'échelle ---------- */
+.stage{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden}
+.deck{width:1280px;height:720px;position:relative;transform-origin:center center}
+.slide{position:absolute;inset:0;background:var(--bg);padding:40px 64px 50px;display:flex;flex-direction:column;gap:16px;opacity:0;visibility:hidden;transition:opacity .25s;overflow:hidden}
+.slide.on{opacity:1;visibility:visible}
+.slide>header{display:flex;align-items:baseline;gap:18px}
+.kick{font-size:.62rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.slide h2{font-size:2.3rem;max-width:1100px}
+.lead{font-size:1.05rem;color:var(--muted);max-width:980px}
+.foot{position:absolute;left:64px;right:64px;bottom:18px;display:flex;justify-content:space-between;font-size:.58rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.foot b{color:var(--ink)}
+.foot b i{font-style:normal;color:var(--signal)}
+
+/* Blocs */
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g5{grid-template-columns:repeat(5,1fr)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card h3{font-size:1.25rem}
+.card p,.card li{font-size:.72rem;color:var(--ink)}
+.card .muted{color:var(--muted)}
+.card.dark{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.card.dark p,.card.dark li{color:var(--bg)}
+.card.accent{border-top:5px solid var(--accent)}
+.card.signal{border-top:5px solid var(--signal)}
+.card.red{border-top:5px solid var(--red)}
+.ico{font-size:1.4rem;line-height:1}
+.tag{display:inline-block;font-size:.56rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);align-self:flex-start}
+.tag.y{background:var(--signal-soft);color:#8a5a00}.tag.r{background:var(--red-soft);color:var(--red)}.tag.g{background:var(--green-soft);color:var(--green)}
+.analogie{background:var(--surface);border-left:5px solid var(--signal);border-radius:0 10px 10px 0;padding:12px 16px;font-size:.78rem}
+.analogie b{font-family:var(--f-display);font-size:.95rem;letter-spacing:.02em}
+.case{background:var(--accent-soft);border-radius:12px;padding:14px 18px;font-size:.74rem;display:grid;gap:6px}
+.case b.t{font-family:var(--f-display);font-size:1rem;color:var(--accent)}
+.small{font-size:.66rem}
+.muted{color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.68rem;background:var(--surface);border-radius:12px;overflow:hidden}
+th{text-align:left;font-size:.56rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:7px 12px;border-bottom:1px solid var(--line);background:var(--sunk)}
+td{padding:6px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.y{color:var(--green);font-weight:600}td.n{color:var(--red);font-weight:600}td.m{color:#8a5a00;font-weight:600}
+
+/* Titre */
+.s-title{background:var(--ink);color:var(--bg);justify-content:center;gap:28px}
+.s-title .brand{font-family:var(--f-display);font-size:1.4rem;letter-spacing:.06em}
+.s-title .brand i{font-style:normal;color:var(--signal)}
+.s-title h1{font-size:5rem;max-width:1000px}
+.s-title h1 em{font-style:normal;color:var(--signal)}
+.s-title .sub{font-size:1.1rem;opacity:.8;max-width:860px}
+.s-title .meta{display:flex;gap:28px;font-size:.7rem;opacity:.75;letter-spacing:.05em;text-transform:uppercase}
+.plate{display:inline-flex;align-items:stretch;border:2px solid #111;border-radius:6px;background:#fff;color:#111;font-family:var(--f-mono);font-weight:700;font-size:1.1rem;overflow:hidden;align-self:flex-start}
+.plate span{padding:6px 10px}.plate .b{background:#1f4fa3;color:#fff;font-size:.6rem;display:flex;align-items:center;padding:0 6px}
+
+/* Tensions */
+.tension{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:start}
+.tension .n{font-family:var(--f-display);font-size:2.4rem;color:var(--red);line-height:.9}
+
+/* Timeline */
+.tl{display:grid;gap:0;position:relative}
+.tl .step{display:grid;grid-template-columns:96px 1fr;gap:16px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.72rem;align-items:baseline}
+.tl .step:last-child{border-bottom:0}
+.tl .h{font-family:var(--f-mono);font-weight:700;color:var(--accent);font-size:.78rem}
+.tl .who{font-size:.56rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+
+/* Étapes */
+.steps4{display:grid;grid-template-columns:repeat(4,1fr);gap:0;counter-reset:st}
+.steps4 .st{padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-left:0;display:flex;flex-direction:column;gap:8px;position:relative}
+.steps4 .st:first-child{border-left:1px solid var(--line);border-radius:12px 0 0 12px}
+.steps4 .st:last-child{border-radius:0 12px 12px 0}
+.steps4 .st::before{counter-increment:st;content:counter(st);width:34px;height:34px;border-radius:50%;background:var(--signal);color:var(--ink);font-family:var(--f-display);font-size:1.2rem;display:grid;place-items:center}
+.steps4 .st h3{font-size:1.15rem}
+.steps4 .st p,.steps4 .st li{font-size:.68rem}
+
+/* Barre de navigation */
+.nav{position:fixed;right:14px;top:12px;display:flex;gap:8px;align-items:center;background:rgba(21,32,40,.88);color:#fff;border-radius:999px;padding:6px 8px;z-index:10;font-size:14px;backdrop-filter:blur(4px)}
+.nav button{border:0;background:transparent;color:#fff;font:inherit;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px}
+.nav button:hover{background:rgba(255,255,255,.15)}
+.nav button:focus-visible{outline:2px solid var(--signal)}
+.nav .cnt{font-family:var(--f-mono);min-width:62px;text-align:center}
+.progress{position:fixed;left:0;top:0;height:4px;background:var(--signal);z-index:10;transition:width .25s}
+.nav,.progress{opacity:.25;transition:opacity .3s}
+body:hover .nav,body:hover .progress,.nav:focus-within{opacity:1}
+
+/* Mode lecture (téléphone) : les diapos défilent */
+body.scroll{height:auto;background:var(--bg)}
+body.scroll .stage{position:static;display:block}
+body.scroll .deck{width:auto;height:auto;transform:none!important}
+body.scroll .slide{position:relative;opacity:1;visibility:visible;height:auto;padding:28px 16px 40px;border-bottom:6px solid var(--ink);font-size:17px}
+body.scroll .slide h2{font-size:1.8rem}
+body.scroll .s-title h1{font-size:2.6rem}
+body.scroll .grid{grid-template-columns:1fr!important}
+body.scroll .steps4{grid-template-columns:1fr}
+body.scroll .steps4 .st{border-left:1px solid var(--line);border-radius:12px!important;margin-bottom:8px}
+body.scroll .foot{position:static;margin-top:8px}
+body.scroll .nav,body.scroll .progress{display:none}
+body.scroll .tl .step{grid-template-columns:70px 1fr}
+body.scroll .wide-svg{overflow-x:auto}
+body.scroll table{display:block;overflow-x:auto}
+
+@media print{
+  @page{size:1280px 720px;margin:0}
+  html,body{background:#fff;height:auto}
+  .stage{position:static;display:block}.deck{transform:none!important;width:1280px;height:auto}
+  .slide{position:relative;opacity:1;visibility:visible;width:1280px;height:720px;page-break-after:always;break-after:page}
+  .nav,.progress{display:none}
+}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="stage"><div class="deck" id="deck">
+
+<!-- 1. Titre -->
+<section class="slide s-title">
+  <div class="brand">TECH<i>'</i>AUTO · KOUROU</div>
+  <h1>L'atelier qui <em>anticipe</em> au lieu de subir.</h1>
+  <p class="sub">Rendez-vous en ligne, SMS automatiques, pièces réservées selon le planning, entretien prévu au kilomètre, imprévus absorbés. Une démarche simple, pensée pour la Guyane et ses délais de livraison.</p>
+  <div class="plate"><span class="b">F</span><span>RDV-2026-OK</span><span class="b">973</span></div>
+  <div class="meta"><span>Proposition · Automatisation Consciente</span><span>Kourou · octobre 2026</span><span>Démo fonctionnelle disponible</span></div>
+</section>
+
+<!-- 2. Constat -->
+<section class="slide">
+  <header><span class="kick">01 · Le constat</span></header>
+  <h2>Cinq tensions qui coûtent du temps, des clients et des ponts immobilisés</h2>
+  <div class="grid g5" style="flex:1;align-content:start">
+    <div class="card red"><span class="ico">📞</span><h3>Le téléphone qui sonne</h3><p>Chaque RDV pris au téléphone interrompt la secrétaire, souvent en pleine facture.</p></div>
+    <div class="card red"><span class="ico">🪑</span><h3>Le pont vide</h3><p>Un client qui oublie son RDV, c'est une heure de mécanicien perdue sans prévenir.</p></div>
+    <div class="card red"><span class="ico">📦</span><h3>La pièce absente</h3><p>Une pièce de métropole met 15 à 20 jours. Découverte le jour J, la voiture reste immobilisée.</p></div>
+    <div class="card red"><span class="ico">🤒</span><h3>L'imprévu</h3><p>Mécano malade, panne d'un pont, formation : tout le planning se réorganise à la main.</p></div>
+    <div class="card red"><span class="ico">🔁</span><h3>Le client qu'on ne relance pas</h3><p>Une vidange qui arrive à échéance, c'est du chiffre d'affaires qui attend un simple message.</p></div>
+  </div>
+  <div class="analogie"><b>L'image :</b> aujourd'hui l'atelier roule <b>sans tableau de bord</b>. On découvre le manque d'essence quand la voiture s'arrête. L'objectif : voir les voyants s'allumer <i>avant</i> la panne.</div>
+  <div class="foot"><b>TECH<i>'</i>AUTO</b><span>Chiffres réels à mesurer pendant l'audit</span></div>
+</section>
+
+<!-- 3. Solution en une image -->
+<section class="slide">
+  <header><span class="kick">02 · La solution en une image</span></header>
+  <h2>Un tableau partagé comme boîte aux lettres, un script comme facteur</h2>
+  <div class="wide-svg">
+  <svg viewBox="0 0 1150 300" width="1150" height="300" role="img" aria-label="Schéma : l'application et la secrétaire déposent les RDV dans le tableau ; le script envoie les SMS, réserve les pièces et alerte le magasin.">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5a6a73"/></marker></defs>
+    <g font-family="Barlow, sans-serif">
+      <rect x="10" y="40" width="220" height="90" rx="12" fill="#fff" stroke="#d3dadd"/><text x="120" y="78" text-anchor="middle" font-size="22" font-weight="600" fill="#152028">🌐 RDV en ligne</text><text x="120" y="104" text-anchor="middle" font-size="15" fill="#5a6a73">le client réserve 24 h/24</text>
+      <rect x="10" y="170" width="220" height="90" rx="12" fill="#fff" stroke="#d3dadd"/><text x="120" y="208" text-anchor="middle" font-size="22" font-weight="600" fill="#152028">📞 Secrétariat</text><text x="120" y="234" text-anchor="middle" font-size="15" fill="#5a6a73">planning des 5 mécanos</text>
+      <rect x="350" y="70" width="290" height="160" rx="14" fill="#152028"/><text x="495" y="125" text-anchor="middle" font-size="26" font-weight="700" fill="#efb200">📒 Tableau partagé</text><text x="495" y="155" text-anchor="middle" font-size="16" fill="#eceff0">Google Sheets ou Excel 365</text><text x="495" y="182" text-anchor="middle" font-size="14" fill="#93a3ab">RDV · Pièces · Réservations · SMS</text><text x="495" y="206" text-anchor="middle" font-size="14" fill="#93a3ab">la « boîte aux lettres »</text>
+      <text x="495" y="262" text-anchor="middle" font-size="15" fill="#0b6b70" font-weight="600">⚙️ le script passe toutes les 5 min</text>
+      <rect x="760" y="10" width="380" height="64" rx="12" fill="#d6ebeb"/><text x="780" y="48" font-size="18" fill="#152028">📱 SMS / WhatsApp : confirmation, rappel, prêt</text>
+      <rect x="760" y="86" width="380" height="64" rx="12" fill="#d6ebeb"/><text x="780" y="124" font-size="18" fill="#152028">🔩 Pièces réservées d'office par RDV</text>
+      <rect x="760" y="162" width="380" height="64" rx="12" fill="#fbecd0"/><text x="780" y="200" font-size="18" fill="#152028">🚨 Alerte magasin selon le délai métropole</text>
+      <rect x="760" y="238" width="380" height="56" rx="12" fill="#fff" stroke="#d3dadd"/><text x="780" y="272" font-size="18" fill="#152028">📊 Tableau de bord du PDG</text>
+      <path d="M230 85 L345 125" stroke="#5a6a73" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <path d="M230 215 L345 175" stroke="#5a6a73" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <path d="M640 130 L755 45" stroke="#5a6a73" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <path d="M640 145 L755 118" stroke="#5a6a73" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <path d="M640 160 L755 194" stroke="#5a6a73" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <path d="M640 175 L755 262" stroke="#5a6a73" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+    </g>
+  </svg></div>
+  <div class="grid g3">
+    <div class="analogie"><b>Boîte aux lettres :</b> chacun y dépose (RDV, pièce reçue), personne n'a besoin d'un logiciel lourd.</div>
+    <div class="analogie"><b>Facteur :</b> le script fait la tournée seul, même le soir, même quand la secrétaire est en congé.</div>
+    <div class="analogie"><b>Pas de magie noire :</b> tout reste lisible dans le tableau. Si le facteur s'arrête, le courrier attend, rien ne se perd.</div>
+  </div>
+  <div class="foot"><b>TECH<i>'</i>AUTO</b><span>Démo testée : SMS réels envoyés depuis le téléphone du garage</span></div>
+</section>
+
+<!-- 4. Points forts -->
+<section class="slide">
+  <header><span class="kick">03 · Les points forts</span></header>
+  <h2>Ce qui fonctionne déjà dans la démo</h2>
+  <div class="grid g3" style="flex:1;align-content:start">
+    <div class="card accent"><span class="tag">Client</span><h3>🌐 RDV en ligne 24 h/24</h3><p>4 étapes : prestation, véhicule, créneau, coordonnées. L'app suggère la bonne prestation à partir du symptôme (« clim souffle tiède » → recharge clim).</p></div>
+    <div class="card accent"><span class="tag">Secrétariat</span><h3>🗓️ Planning des 5 mécanos</h3><p>Impossible de garer deux voitures sur la même place : chaque créneau tient compte de la durée réelle et de la spécialité.</p></div>
+    <div class="card accent"><span class="tag">Client</span><h3>📱 SMS automatiques</h3><p>Confirmation, rappel la veille à 17 h, « véhicule prêt » avec le montant. Rien ne part avant 7 h ni après 20 h.</p></div>
+    <div class="card signal"><span class="tag y">Pièces</span><h3>🔩 Stock relié au planning</h3><p>Chaque RDV réserve ses pièces. Si une pièce de métropole ne peut pas arriver à temps, le créneau est bloqué côté client et le magasin est alerté.</p></div>
+    <div class="card signal"><span class="tag y">Pièces</span><h3>🚨 Urgence confrères</h3><p>Un bouton : SMS aux revendeurs et garages voisins, liens WhatsApp et appel. La première réponse lève l'alerte rouge.</p></div>
+    <div class="card"><span class="tag g">Direction</span><h3>📊 Tableau de bord + fiches</h3><p>Remplissage de l'atelier, CA prévisionnel, pièces en alerte, temps gagné. Fiches pratiques pour former un remplaçant en une matinée.</p></div>
+  </div>
+  <div class="foot"><b>TECH<i>'</i>AUTO</b><span>Scan des pièces : douchette Bluetooth (≈ 30-40 €) ou caméra du téléphone</span></div>
+</section>
+
+<!-- 5. Cas pratique -->
+<section class="slide">
+  <header><span class="kick">04 · Cas pratique</span></header>
+  <h2>Une vidange et des plaquettes, du clic à la remise des clés</h2>
+  <div class="grid" style="grid-template-columns:1.35fr 1fr;flex:1;align-items:start">
+    <div class="card"><div class="tl">
+      <div class="step"><span class="h">Lun 22:10</span><span><span class="who">Client</span><br>Mme L. réserve en ligne « vidange » et coche « bruit en freinant ». L'app propose les plaquettes : ajoutées.</span></div>
+      <div class="step"><span class="h">Lun 22:10</span><span><span class="who">Automatique</span><br>Huile et filtre : en stock, réservés. Plaquettes : à faire venir. Seuls les créneaux compatibles avec le délai s'affichent.</span></div>
+      <div class="step"><span class="h">Mar 07:30</span><span><span class="who">Responsable pièces</span><br>Alerte orange « commander aujourd'hui ». Commande notée, date d'arrivée calculée.</span></div>
+      <div class="step"><span class="h">J-1 17:00</span><span><span class="who">Automatique</span><br>SMS de rappel. Les plaquettes ont été bipées à la réception : l'alerte est éteinte.</span></div>
+      <div class="step"><span class="h">Jour J 08:00</span><span><span class="who">Mécanicien</span><br>Fiche RDV : symptôme noté avec les mots du client, pièces prêtes sur l'étagère.</span></div>
+      <div class="step"><span class="h">Jour J 11:30</span><span><span class="who">Automatique</span><br>Statut « Terminé » : pièces sorties du stock, SMS « votre véhicule est prêt, 238 € ».</span></div>
+    </div></div>
+    <div style="display:grid;gap:14px">
+      <div class="case"><b class="t">Ce que personne n'a eu à faire</b><ul><li>Décrocher le téléphone</li><li>Vérifier l'étagère la veille</li><li>Rappeler la cliente</li><li>Mettre à jour un cahier de stock</li></ul></div>
+      <div class="analogie"><b>Faire les courses avant de cuisiner :</b> on ne lance plus la recette sans savoir si les ingrédients seront là.</div>
+      <div class="case" style="background:var(--signal-soft)"><b class="t" style="color:#8a5a00">Et si la pièce ne vient pas ?</b><p>Alerte rouge → bouton Urgence → SMS à 4 confrères → « On l'a, passez à 14 h ».</p></div>
+    </div>
+  </div>
+  <div class="foot"><b>TECH<i>'</i>AUTO</b><span>Scénario rejouable dans la démo</span></div>
+</section>
+
+<!-- 6. Adaptation tableur -->
+<section class="slide">
+  <header><span class="kick">05 · Adaptations possibles</span></header>
+  <h2>Google Sheets ou Excel ? Le moteur change, la logique reste</h2>
+  <table>
+    <thead><tr><th style="width:22%"></th><th>Google Sheets (démo actuelle)</th><th>Excel 365 en ligne (OneDrive / SharePoint)</th><th>Excel sur le PC du bureau</th></tr></thead>
+    <tbody>
+      <tr><td><b>Le « facteur »</b></td><td>Apps Script, inclus</td><td>Power Automate + Office Scripts</td><td>Macros VBA</td></tr>
+      <tr><td><b>Tourne la nuit, PC éteint</b></td><td class="y">Oui</td><td class="y">Oui</td><td class="n">Non : seulement si le PC est allumé et le fichier ouvert</td></tr>
+      <tr><td><b>Envoi SMS / WhatsApp</b></td><td class="y">Direct, déjà testé</td><td class="m">Possible ; l'appel à un service SMS demande souvent une licence Power Automate « premium »</td><td class="m">Bricolage, peu fiable</td></tr>
+      <tr><td><b>Page RDV en ligne + tableau stock</b></td><td class="y">Inclus (pages web du script)</td><td class="m">À héberger à part (site du garage)</td><td class="n">Non</td></tr>
+      <tr><td><b>Coût logiciel</b></td><td class="y">Compte Google gratuit ou Workspace</td><td class="m">Licences Microsoft 365 entreprise</td><td class="y">Déjà en place</td></tr>
+      <tr><td><b>Habitudes de l'équipe</b></td><td class="m">Nouveau pour certains</td><td class="y">Familier si le garage utilise déjà Excel</td><td class="y">Familier</td></tr>
+      <tr><td><b>Effort d'adaptation</b></td><td class="y">Aucun</td><td class="m">≈ réécriture du script en Power Automate</td><td class="n">Déconseillé pour l'automatique</td></tr>
+    </tbody>
+  </table>
+  <div class="grid g2">
+    <div class="case"><b class="t">Recommandation</b><p>Si le garage vit déjà dans Microsoft 365 : <b>Excel en ligne + Power Automate</b>, à valider pendant l'audit (licences existantes). Sinon : <b>Google Sheets</b>, déjà prêt.</p></div>
+    <div class="analogie"><b>L'analogie :</b> c'est changer de marque de pont élévateur. Les gestes du mécano restent les mêmes, seule la fixation au sol change.</div>
+  </div>
+  <div class="foot"><b>TECH<i>'</i>AUTO</b><span>Possibilité d'export Excel du stock à tout moment, quel que soit le choix</span></div>
+</section>
+
+<!-- 7. Adaptation messagerie -->
+<section class="slide">
+  <header><span class="kick">05 · Adaptations possibles</span></header>
+  <h2>SMS, WhatsApp ou les deux : le bon canal pour le bon message</h2>
+  <table>
+    <thead><tr><th style="width:18%"></th><th>SMS via le téléphone du garage</th><th>SMS pro (Brevo)</th><th>WhatsApp Business (API)</th></tr></thead>
+    <tbody>
+      <tr><td><b>Comment</b></td><td>Appli passerelle sur un Android, carte SIM du garage. <b>Testé et fonctionnel.</b></td><td>Service en ligne, expéditeur affiché « TECHAUTO »</td><td>Via un prestataire agréé par Meta (InfiniReach propose aussi ce canal, à confirmer)</td></tr>
+      <tr><td><b>Coût</b></td><td class="y">Forfait SIM du garage</td><td class="m">Payé au SMS</td><td class="m">Payé au message envoyé par le garage</td></tr>
+      <tr><td><b>Atteint</b></td><td class="y">Tout le monde, même sans smartphone</td><td class="y">Tout le monde</td><td class="m">Clients ayant WhatsApp et donné leur accord</td></tr>
+      <tr><td><b>Contenu</b></td><td>Texte</td><td>Texte</td><td class="y">Photos (pièce usée), devis PDF, boutons « Confirmer / Décaler »</td></tr>
+      <tr><td><b>Contraintes</b></td><td class="m">Téléphone branché, Wi-Fi stable</td><td class="m">Expéditeur alphanumérique : pas de réponse possible</td><td class="m">Messages initiés par le garage = modèles validés par Meta ; échange libre 24 h après une réponse du client</td></tr>
+    </tbody>
+  </table>
+  <div class="grid g3">
+    <div class="card accent"><h3>📱 SMS</h3><p>Pour ce qui doit arriver à tout le monde : confirmation, rappel de la veille, véhicule prêt.</p></div>
+    <div class="card signal"><h3>💬 WhatsApp</h3><p>Pour ce qui se montre : photo des plaquettes à 20 %, devis à valider, échange avec les confrères.</p></div>
+    <div class="card"><h3>🔀 Bascule automatique</h3><p>Une case « préfère WhatsApp » sur la fiche client ; sinon SMS. Le reste du système ne change pas.</p></div>
+  </div>
+  <div class="foot"><b>TECH<i>'</i>AUTO</b><span>Tarifs exacts à vérifier au moment du choix</span></div>
+</section>
+
+<!-- 8. Évolution : entretien au km -->
+<section class="slide">
+  <header><span class="kick">06 · Évolution du cœur de métier : réparer et entretenir</span></header>
+  <h2>Le carnet d'entretien qui prévient tout seul, au kilomètre près</h2>
+  <div class="grid" style="grid-template-columns:1.15fr 1fr;flex:1;align-items:start">
+    <div class="card">
+      <svg viewBox="0 0 620 270" width="100%" role="img" aria-label="Graphique : kilométrage relevé à deux passages, tendance prolongée jusqu'au seuil de vidange à 97 000 km, atteint vers le 7 novembre.">
+        <g font-family="Barlow, sans-serif" font-size="13" fill="#5a6a73">
+          <line x1="60" y1="230" x2="600" y2="230" stroke="#d3dadd"/><line x1="60" y1="20" x2="60" y2="230" stroke="#d3dadd"/>
+          <text x="54" y="234" text-anchor="end">80 000</text><text x="54" y="164" text-anchor="end">90 000</text><text x="54" y="94" text-anchor="end">100 000</text><text x="54" y="28" text-anchor="end">km</text>
+          <line x1="60" y1="160" x2="600" y2="160" stroke="#eceff0"/><line x1="60" y1="90" x2="600" y2="90" stroke="#eceff0"/>
+          <line x1="60" y1="111" x2="600" y2="111" stroke="#b3261e" stroke-dasharray="6 5"/><text x="68" y="104" fill="#b3261e" font-weight="600">Vidange due : 97 000 km</text>
+          <line x1="80" y1="216" x2="460" y2="125" stroke="#0b6b70" stroke-width="3"/>
+          <line x1="460" y1="125" x2="520" y2="111" stroke="#0b6b70" stroke-width="3" stroke-dasharray="6 5"/>
+          <circle cx="80" cy="216" r="7" fill="#0b6b70"/><text x="80" y="252" text-anchor="middle">10 mars · 82 000</text>
+          <circle cx="460" cy="125" r="7" fill="#0b6b70"/><text x="460" y="252" text-anchor="middle">6 oct. · 95 000</text>
+          <circle cx="520" cy="111" r="8" fill="#efb200" stroke="#152028" stroke-width="2"/><text x="520" y="78" text-anchor="middle" fill="#152028" font-weight="600">≈ 7 nov.</text>
+          <line x1="400" y1="40" x2="400" y2="230" stroke="#efb200" stroke-width="2"/><text x="396" y="52" text-anchor="end" fill="#8a5a00" font-weight="600">SMS le 17 oct. →</text>
+        </g>
+      </svg>
+      <p class="small muted">Toyota Hilux de M. C. · 13 000 km en 210 jours = <b>≈ 62 km/jour</b> · 2 000 km restants ≈ 32 jours.</p>
+    </div>
+    <div style="display:grid;gap:12px">
+      <div class="analogie"><b>Comme la météo :</b> on ne sait pas exactement quand il pleuvra, mais la tendance suffit pour sortir le parapluie à temps.</div>
+      <div class="case"><b class="t">Le principe</b><ol><li>Le mécano relève le kilométrage à chaque passage (déjà dans la checklist d'accueil).</li><li>Le système calcule le rythme du client en km/jour.</li><li>Il prévoit la date de chaque échéance : <b>km ou durée, la première atteinte</b>.</li><li>3 semaines avant : SMS avec lien de réservation pré-rempli.</li></ol></div>
+      <table><thead><tr><th>Échéance (exemples à caler sur les carnets)</th><th>Km</th><th>Ou durée</th></tr></thead><tbody>
+        <tr><td>Vidange + filtre</td><td class="mono">15 000</td><td>1 an</td></tr><tr><td>Recharge clim</td><td>—</td><td>1 an</td></tr>
+        <tr><td>Courroie de distribution</td><td class="mono">120 000</td><td>5-6 ans</td></tr><tr><td>Plaquettes (usure notée)</td><td colspan="2">selon % relevé</td></tr></tbody></table>
+    </div>
+  </div>
+  <div class="foot"><b>TECH<i>'</i>AUTO</b><span>Exemple fictif · intervalles à paramétrer par modèle selon les préconisations constructeur</span></div>
+</section>
+
+<!-- 9. Évolution : pièces suivent les prévisions -->
+<section class="slide">
+  <header><span class="kick">06 · Évolution du cœur de métier : réparer et entretenir</span></header>
+  <h2>Les pièces suivent les prévisions : on commande avant même le RDV</h2>
+  <div class="grid g3" style="align-items:start">
+    <div class="card accent"><span class="tag">1 · Prévoir</span><h3>Les entretiens du mois prochain</h3><p>Le carnet prédictif annonce, par exemple : <b>14 vidanges</b> dont 6 Hilux, <b>9 recharges clim</b>, <b>3 jeux de plaquettes</b> (usure relevée).</p></div>
+    <div class="card signal"><span class="tag y">2 · Commander groupé</span><h3>Une seule commande métropole</h3><p>Les besoins sont convertis en pièces, moins le stock disponible. Une commande groupée part <b>20 jours avant</b>, avec un seul fret.</p></div>
+    <div class="card"><span class="tag g">3 · Réserver</span><h3>Le client réserve, la pièce l'attend</h3><p>Quand le client clique sur le lien du SMS, la pièce est déjà sur l'étagère : créneau proposé dès la semaine suivante.</p></div>
+  </div>
+  <div class="grid g2" style="align-items:start">
+    <div class="case"><b class="t">Travaux recommandés, pas oubliés</b><p>« Plaquettes à 30 % », « pneu AR à surveiller » : le mécano coche un travail à prévoir sur la fiche. Le système programme le rappel et prépare le devis. Ce qui était une phrase dite au comptoir devient un RDV.</p></div>
+    <div class="analogie"><b>Le boulanger :</b> il ne pétrit pas quand le client entre, il sait combien de baguettes partiront demain. L'atelier peut savoir combien de vidanges arrivent le mois prochain.</div>
+  </div>
+  <div class="foot"><b>TECH<i>'</i>AUTO</b><span>Gain attendu : moins d'urgences, fret groupé, clients fidélisés (à mesurer)</span></div>
+</section>
+
+<!-- 10. Évolution : imprévu -->
+<section class="slide">
+  <header><span class="kick">06 · Évolution du cœur de métier : accueillir l'imprévu</span></header>
+  <h2>Garder de la place pour ce qui n'était pas prévu</h2>
+  <div class="grid g4" style="align-items:start">
+    <div class="card red"><span class="ico">🛣️</span><h3>Une marge réservée</h3><p>Le planning en ligne se remplit à <b>85 % maximum</b> : le reste est gardé pour les dépannages et les clients sans RDV. Ce taux s'ajuste selon l'historique réel.</p></div>
+    <div class="card red"><span class="ico">🤒</span><h3>Mécano absent</h3><p>Bouton « absence » : ses RDV sont proposés aux collègues de même spécialité. Pour ceux qui ne passent pas, un SMS propose 2 nouveaux créneaux au client.</p></div>
+    <div class="card red"><span class="ico">🔧</span><h3>Pont ou outil en panne</h3><p>Chaque poste est une ressource du planning. Panne déclarée : les RDV qui en dépendent sont signalés et replacés.</p></div>
+    <div class="card red"><span class="ico">🎓</span><h3>Formation, congés</h3><p>Bloqués à l'avance dans le planning : le site en ligne ne propose plus ces créneaux, sans y penser.</p></div>
+  </div>
+  <div class="grid" style="grid-template-columns:1.25fr 1fr 1fr;align-items:start">
+    <div class="case"><b class="t">Cas pratique : lundi 7 h, Jean-Marc est malade</b><p>4 RDV dans sa colonne. En 1 clic : 2 vidanges passent à Samuel, 1 diagnostic à Dylan, la courroie de distribution (4 h) n'a pas de remplaçant → la cliente reçoit à 7 h 05 : « Nous devons décaler votre RDV : mercredi 8 h ou jeudi 13 h 30 ? Répondez 1 ou 2. »</p></div>
+    <div class="card signal"><h3>🧰 Stock « imprévu »</h3><p>Un petit stock de sécurité pour les pannes sans RDV (batteries, plaquettes courantes, ampoules, courroies accessoires), calculé sur les dépannages réels des 3 derniers mois, pas au doigt mouillé.</p></div>
+    <div class="analogie"><b>La bande d'arrêt d'urgence :</b> une autoroute sans elle est plus large… jusqu'au premier accident. 15 % de marge évitent le bouchon de toute la journée.</div>
+  </div>
+  <div class="foot"><b>TECH<i>'</i>AUTO</b><span>Marge et stock de sécurité calibrés pendant l'audit</span></div>
+</section>
+
+<!-- 11. Formations -->
+<section class="slide">
+  <header><span class="kick">07 · Formations</span></header>
+  <h2>Chaque rôle formé à ses gestes, sur place, en séances courtes</h2>
+  <div class="grid g5" style="flex:1;align-content:start">
+    <div class="card accent"><span class="tag">2 × ½ journée</span><h3>Secrétaire(s)</h3><ul><li>Prise de RDV au téléphone : le script des 5 questions</li><li>Lire et ajuster le planning</li><li>Relances, SMS, « à confirmer »</li><li>Gérer un imprévu : absence, retard, client sans RDV</li><li>Facturer le jour même</li></ul></div>
+    <div class="card signal"><span class="tag y">½ journée + inventaire</span><h3>Responsable pièces</h3><ul><li>Inventaire de départ accompagné (le vrai chantier)</li><li>Scan : entrée, sortie, comptage</li><li>Lire les couleurs 🔴 🟠 🟡</li><li>Commander, réceptionner, urgence confrères</li><li>Ajuster seuils et délais fournisseurs</li></ul></div>
+    <div class="card"><span class="tag g">1 h + atelier</span><h3>Mécaniciens (5)</h3><ul><li>Ce qui change pour eux, et ce qui ne change pas</li><li>Fiche RDV sur téléphone ou tablette</li><li>Relever le km, noter les travaux à prévoir</li><li>Passer « Terminé » : pièces sorties, client prévenu</li></ul></div>
+    <div class="card"><span class="tag g">1 h</span><h3>Chef d'atelier</h3><ul><li>Réaffecter, gérer une absence</li><li>Marge d'imprévu du jour</li><li>Valider les travaux recommandés</li></ul></div>
+    <div class="card dark"><span class="tag y">45 min</span><h3>PDG</h3><ul><li>Tableau de bord : remplissage, CA, pièces</li><li>Indicateurs avant / après</li><li>Décider des réglages (marge, délais)</li></ul></div>
+  </div>
+  <div class="analogie"><b>Notre méthode :</b> une analogie par geste, une fiche pratique d'une page par rôle, un remplaçant formé en une matinée. <b>Suivi 30 jours :</b> point hebdomadaire de 30 min et réponses aux questions sur WhatsApp.</div>
+  <div class="foot"><b>TECH<i>'</i>AUTO</b><span>Durées indicatives, ajustées après l'audit</span></div>
+</section>
+
+<!-- 12. Audit et présentation mécanos -->
+<section class="slide">
+  <header><span class="kick">08 · Audit et présentation aux mécaniciens</span></header>
+  <h2>Partir du terrain : les mécaniciens sont les premiers experts</h2>
+  <div class="grid g3" style="align-items:start">
+    <div class="card accent"><span class="tag">Observer</span><h3>👀 Une journée à l'atelier</h3><ul><li>Où se perd le temps : pièce cherchée, client rappelé, info manquante</li><li>Comment arrivent les urgences</li><li>Comment circule l'info entre accueil et pont</li></ul></div>
+    <div class="card signal"><span class="tag y">Écouter</span><h3>🗣️ 15 min avec chacun</h3><ul><li>« Qu'est-ce qui vous fait perdre du temps ? »</li><li>« Quelle info vous manque quand vous ouvrez un capot ? »</li><li>« Si vous aviez une baguette magique ? »</li></ul><p class="muted">Écoute active : on reformule, on ne juge pas.</p></div>
+    <div class="card"><span class="tag g">Mesurer</span><h3>📏 Les chiffres de départ</h3><ul><li>Appels par jour, RDV non honorés</li><li>Voitures immobilisées faute de pièce</li><li>Délai moyen de remise des clés</li><li>Part des entretiens « revenus » sans relance</li></ul></div>
+  </div>
+  <div class="grid" style="grid-template-columns:1.3fr 1fr;align-items:start">
+    <div class="case"><b class="t">La présentation aux mécanos (1 h, à l'atelier)</b><ol><li>Ce qu'on a entendu d'eux, avec leurs mots</li><li>Démo en direct sur un vrai RDV : fiche, pièces prêtes, « Terminé »</li><li>Ce qui leur est demandé : 3 gestes (km, travaux à prévoir, statut)</li><li>Ce qu'ils y gagnent : pièces prêtes, symptômes notés, moins d'interruptions</li></ol></div>
+    <div class="analogie"><b>Un outil se règle à la main de celui qui le tient.</b> Un système imposé d'en haut finit au fond du tiroir ; un système co-construit devient l'outil de l'équipe.</div>
+  </div>
+  <div class="foot"><b>TECH<i>'</i>AUTO</b><span>Restitution de l'audit au PDG avec chiffres et priorités</span></div>
+</section>
+
+<!-- 13. Démarche -->
+<section class="slide">
+  <header><span class="kick">09 · La démarche</span></header>
+  <h2>Quatre étapes, chacune utile seule</h2>
+  <div class="steps4">
+    <div class="st"><h3>Audit</h3><p class="muted">Semaine 1</p><ul><li>Observation et entretiens</li><li>Chiffres de départ</li><li>Choix Sheets / Excel, SMS / WhatsApp</li></ul></div>
+    <div class="st"><h3>RDV + SMS</h3><p class="muted">Semaines 2 à 4</p><ul><li>Planning, RDV en ligne</li><li>Confirmation, rappel, prêt</li><li>Formation secrétariat</li></ul></div>
+    <div class="st"><h3>Stock relié</h3><p class="muted">Mois 2</p><ul><li>Inventaire de départ</li><li>Réservation par RDV, alertes délai</li><li>Scan, urgence confrères</li></ul></div>
+    <div class="st"><h3>Entretien prédictif</h3><p class="muted">Mois 3</p><ul><li>Rappels au km / à la durée</li><li>Commandes groupées</li><li>Gestion des imprévus</li></ul></div>
+  </div>
+  <table>
+    <thead><tr><th>Indicateur suivi au tableau de bord</th><th>Mesuré à l'audit</th><th>Objectif à fixer ensemble</th></tr></thead>
+    <tbody>
+      <tr><td>RDV non honorés par semaine</td><td>à mesurer</td><td>réduction grâce au rappel de la veille</td></tr>
+      <tr><td>Voitures immobilisées faute de pièce</td><td>à mesurer</td><td>alerte avant le délai métropole</td></tr>
+      <tr><td>Appels de prise de RDV par jour</td><td>à mesurer</td><td>part reportée sur la réservation en ligne</td></tr>
+      <tr><td>Entretiens obtenus par relance</td><td>à mesurer</td><td>nouveau chiffre d'affaires récurrent</td></tr>
+    </tbody>
+  </table>
+  <div class="foot"><b>TECH<i>'</i>AUTO</b><span>Chiffrage précis remis après l'audit</span></div>
+</section>
+
+<!-- 14. Prochaine étape -->
+<section class="slide s-title">
+  <div class="brand">AUTOMATISATION CONSCIENTE</div>
+  <h1>Prochaine étape : <em>un jour d'audit</em> à l'atelier.</h1>
+  <p class="sub">On observe, on écoute chaque rôle, on mesure. Vous repartez avec les chiffres de départ, les priorités et le chiffrage, que vous signiez ou non la suite.</p>
+  <div class="grid g3" style="max-width:1000px">
+    <div class="card dark" style="background:#1e2c36;border-color:#2a3843"><h3 style="color:#efb200">Déjà prêt</h3><p>Démo RDV + SMS + stock, testée avec de vrais SMS.</p></div>
+    <div class="card dark" style="background:#1e2c36;border-color:#2a3843"><h3 style="color:#efb200">Sur mesure</h3><p>Google ou Microsoft, SMS ou WhatsApp : adapté à vos outils.</p></div>
+    <div class="card dark" style="background:#1e2c36;border-color:#2a3843"><h3 style="color:#efb200">Local</h3><p>Basé à Kourou : formation et suivi sur place.</p></div>
+  </div>
+  <div class="meta"><span>Vince · Automatisation Consciente</span><span>Kourou, Guyane</span></div>
+</section>
+
+</div></div>
+
+<nav class="nav" aria-label="Navigation des diapositives">
+  <button id="prev" aria-label="Diapositive précédente">‹</button>
+  <span class="cnt" id="cnt">1 / 14</span>
+  <button id="next" aria-label="Diapositive suivante">›</button>
+  <button id="full" aria-label="Plein écran" title="Plein écran (F)">⛶</button>
+</nav>
+
+<script>
+const slides=[...document.querySelectorAll('.slide')], deck=document.getElementById('deck');
+let i=0;
+function fit(){
+  const scroll=innerWidth<760||innerHeight<420;
+  document.body.classList.toggle('scroll',scroll);
+  deck.style.transform=scroll?'':`scale(${Math.min(innerWidth/1280,innerHeight/720)})`;
+}
+function go(n){
+  i=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach((s,k)=>{s.classList.toggle('on',k===i);s.setAttribute('aria-hidden',k===i?'false':'true')});
+  document.getElementById('cnt').textContent=`${i+1} / ${slides.length}`;
+  document.getElementById('progress').style.width=`${(i+1)/slides.length*100}%`;
+  try{history.replaceState(null,'','#'+(i+1))}catch(e){}
+}
+document.getElementById('prev').onclick=()=>go(i-1);
+document.getElementById('next').onclick=()=>go(i+1);
+document.getElementById('full').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+addEventListener('keydown',e=>{
+  if(document.body.classList.contains('scroll'))return;
+  if(['ArrowRight','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();go(i+1)}
+  else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();go(i-1)}
+  else if(e.key==='Home')go(0);else if(e.key==='End')go(slides.length-1);
+  else if(e.key==='f'||e.key==='F')document.getElementById('full').click();
+});
+let tx=null;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+addEventListener('touchend',e=>{if(tx==null||document.body.classList.contains('scroll'))return;const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)go(i+(d<0?1:-1));tx=null});
+addEventListener('resize',fit);
+fit();go((parseInt(location.hash.slice(1))||1)-1);
+</script>
+</body>
+</html>

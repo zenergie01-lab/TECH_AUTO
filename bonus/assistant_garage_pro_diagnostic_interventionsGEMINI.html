@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoTech Pro - Diagnostic & Préparation Atelier</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .font-chakra { font-family: 'Chakra Petch', sans-serif; }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      body { background: white !important; color: black !important; }
+    }
+  </style>
+</head>
+<body class="h-full bg-slate-950 text-slate-100 antialiased selection:bg-amber-500 selection:text-slate-950">
+  <div id="root" class="h-full"></div>
+
+  <script type="text/babel">
+    const REPAIR_DATA = [
+      {
+        id: "INT-DISTRI",
+        title: "Kit de Distribution + Pompe à Eau",
+        category: "Distribution & Moteur",
+        frequency: "Très Élevée",
+        durationMinutes: 240,
+        formattedDuration: "3h30 à 4h30",
+        riskLevel: "CRITIQUE",
+        riskColor: "bg-red-500/10 text-red-400 border-red-500/30",
+        badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+        description: "Remplacement préventif ou curatif de la courroie/chaîne de distribution, galets tendeurs/enrouleurs et pompe à eau.",
+        mandatoryTools: [
+          "Piges de calage moteur spécifiques (Vilebrequin / Arbres à cames)",
+          "Clé dynamométrique (10 à 120 Nm)",
+          "Appareil de mesure de tension de courroie (SEFAC / DM.16)",
+          "Purgeur de LDR à dépression & Bac de récupération",
+          "Outil de blocage de poulie d'ampère / Damper"
+        ],
+        consumables: [
+          "Kit distribution complet (Courroie + Galets + Vis)",
+          "Pompe à eau neuve + Joint d'étanchéité",
+          "Liquide de refroidissement homologué constructeur (5L à 8L)",
+          "Joints spys Vilebrequin / AAC (si fuite détectée)",
+          "Courroie d'accessoires neuve (recommandée)"
+        ],
+        preCheckList: [
+          "Purger complètement le circuit de refroidissement à froid",
+          "Repérer le sens de rotation de la courroie avant dépose",
+          "Vérifier l'absence de fuite d'huile aux joints spys d'AAC et Vilebrequin",
+          "Mettre en place les piges de calage SANS FORCER sur les pignons",
+          "Contrôler le roulement et l'alignement de la pompe à eau neuve",
+          "Effectuer 2 tours complets de moteur à la main après tension pour vérifier le calage",
+          "Purger l'air du circuit de LDR et vérifier l'enclenchement du moto-ventilateur"
+        ],
+        proTips: "Ne jamais réutiliser une courroie déposée. Attention aux pignons fous sur moteurs récents (ex: Renault K4M, Ford EcoBoost) : utiliser impérativement l'outillage de blocage poulie."
+      },
+      {
+        id: "INT-FREIN",
+        title: "Disques & Plaquettes de Frein (Av/Arr + EPB)",
+        category: "Liaison au Sol & Freinage",
+        frequency: "Très Élevée",
+        durationMinutes: 75,
+        formattedDuration: "0h45 à 1h30 (par essieu)",
+        riskLevel: "ÉLEVÉ",
+        riskColor: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+        badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+        description: "Remplacement des éléments d'usure du système de freinage à disque avant ou arrière avec étrier mécanique ou électrique.",
+        mandatoryTools: [
+          "Valise de diagnostic OBD (Mode Maintenance EPB pour frein de parking électrique)",
+          "Repousse-piston universel (avec pas à gauche et pas à droite)",
+          "Pied à coulisse / Palmer de mesure d'épaisseur de disques",
+          "Brosse métallique douce / Nettoyant freins haute pression",
+          "Clé dynamométrique pour vis de étriers & vis de roues"
+        ],
+        consumables: [
+          "Jeu de disques de frein neufs (par paire)",
+          "Jeu de plaquettes de frein homologuées",
+          "Témoins d'usure électroniques (si équipés)",
+          "Graisse céramique haute température (portées de coulisseaux)",
+          "Nettoyant freins dégraissant rapide (2 bombes)"
+        ],
+        preCheckList: [
+          "Désactiver le frein de parking électrique via l'outil de diagnostic",
+          "Contrôler le niveau de liquide de frein dans le réservoir (retirer le surplus pour éviter les débordements au repoussage)",
+          "Mesurer le voile du moyeu au comparateur si présence de vibrations antérieures",
+          "Brosser et duster soigneusement les portées de moyeu et coulisseaux d'étriers",
+          "Appliquer une fine couche de graisse céramique sur les points de contact plaquette/étrier",
+          "Pomper sur la pédale de frein AU SOL avant tout déplacement du véhicule",
+          "Procéder au rodage (20 freinages doux de 50 km/h à 20 km/h)"
+        ],
+        proTips: "Sur les étriers avec EPB, ne jamais forcer le piston à la presse sans passer la valise en mode service sous peine de détruire le micromoteur d'étrier."
+      },
+      {
+        id: "INT-EMBRAY",
+        title: "Embrayage + Volant Moteur Bi-Masse (DVM)",
+        category: "Transmission & Boîte",
+        frequency: "Élevée",
+        durationMinutes: 330,
+        formattedDuration: "4h30 à 6h30",
+        riskLevel: "CRITIQUE",
+        riskColor: "bg-red-500/10 text-red-400 border-red-500/30",
+        badgeColor: "bg-sky-500/10 text-sky-400 border-sky-500/30",
+        description: "Dépose de la boîte de vitesses, remplacement du kit d'embrayage, de la butée hydraulique/mécanique et du volant bi-masse.",
+        mandatoryTools: [
+          "Outil de centrage d'embrayage (Kits réarmables SAC si pré-contraint)",
+          "Vérin de fosse d'atelier (Capacité 500 kg) ou traverse de maintien moteur",
+          "Arrache-moyeu / Outil d'extraction de rotules de suspension",
+          "Clé dynamométrique (Couple serrage volant moteur + frein filet)",
+          "Bac de vidange de boîte de vitesses"
+        ],
+        consumables: [
+          "Kit embrayage complet + Butée hydraulique neuve",
+          "Volant moteur bi-masse (ou kit de conversion monomasse)",
+          "Joint spi de vilebrequin arrière (Côté volant)",
+          "Huile de boîte de vitesses d'origine (2L à 3L)",
+          "Joints d'étanchéité de sorties de différentiel / cardans"
+        ],
+        preCheckList: [
+          "Soutenir le moteur à la traverse de maintien avant d'enlever les supports boîte",
+          "Vidanger la boîte de vitesses avant dépose des cardans",
+          "Inspecter le jeu radial et angulaire du volant bi-masse neuf avant monte",
+          "Remplacer systématiquement le guide de butée et le joint spi de vilebrequin",
+          "Utiliser l'outil SAC pour les mécanismes autoreglables (évite le broutement)",
+          "Remplacer la butée hydraulique et procéder à une purge soignée au DOT4",
+          "Effectuer un réapprentissage du point de patinage si boîte robotisée/double embrayage"
+        ],
+        proTips: "Un volant moteur bi-masse défectueux non remplacé détruira l'embrayage neuf en moins de 5 000 km. Contrôler impérativement la présence d'huile sur la portée."
+      },
+      {
+        id: "INT-EGRFAP",
+        title: "Nettoyage / Remplacement Vanne EGR & FAP",
+        category: "Dépollution & Injection",
+        frequency: "Élevée",
+        durationMinutes: 150,
+        formattedDuration: "1h30 à 3h30",
+        riskLevel: "MODÉRÉ",
+        riskColor: "bg-sky-500/10 text-sky-400 border-sky-500/30",
+        badgeColor: "bg-purple-500/10 text-purple-400 border-purple-500/30",
+        description: "Décalaminage ou remplacement du module EGR et décolmatage/remplacement du Filtre À Particules.",
+        mandatoryTools: [
+          "Valise Diag (Régénération forcée + Réinitialisation des valeurs d'adaptation FAP/EGR)",
+          "Station de décalaminage à l'hydrogène ou bac de nettoyage à ultrasons",
+          "Manomètre de contrôle de pression différentielle FAP",
+          "Outillage manuel d'accès restreint (clés à tuyauter, rallonges flexibles)"
+        ],
+        consumables: [
+          "Vanne EGR neuve ou produit nettoyant solvant calamine haute performance",
+          "Joints métalliques EGR et tuyaux de recyclage gaz neufs",
+          "Additif de régénération FAP (Cérine / Eolys si PSA) ou nettoyant FAP direct",
+          "Capteur de pression différentielle (si défaillant)"
+        ],
+        preCheckList: [
+          "Lire les codes défauts enregistrés et la valeur de suie/cendres accumulée dans le FAP",
+          "Contrôler l'état des durites du capteur de pression différentielle (fissures/bouchons)",
+          "Nettoyer le conduit d'admission au niveau du boîtier papillon doseur d'air",
+          "Remplacer systématiquement les joints métalliques lors du remontage",
+          "Exécuter l'apprentissage des butées de vanne EGR neuve via le calculateur",
+          "Réinitialiser le compteur de masse de suie après remplacement ou nettoyage FAP"
+        ],
+        proTips: "Ne jamais lancer de régénération forcée si le moteur présente un niveau d'huile trop haut (risque de surballement thermique par auto-combustion)."
+      }
+    ];
+
+    const DIAGNOSTIC_DATABASE = [
+      {
+        id: "DIAG-TURBO",
+        title: "Perte de Puissance + Sifflement Aigu à l'Accélération",
+        symptoms: ["Sifflement type 'casserole' ou 'freet' sous charge", "Fumée noire à l'échappement", "Mode dégradé intermittent"],
+        dtcCodes: ["P0299 - Pression de suralimentation sous le seuil", "P0234 - Suralimentation excessive"],
+        category: "Suralimentation & Air",
+        hypotheses: [
+          {
+            cause: "Durite d'intercooler ou de suralimentation fendue / déboîtée",
+            probability: 82,
+            gravity: "Moyenne",
+            quickCheck: "Inspection visuelle et recherche de traces d'huile sous pression sur les coudes durites.",
+            tests: [
+              "Inspecter visuellement les durites souples d'air entre turbo, intercooler et collecteur.",
+              "Mettre le circuit d'air sous pression de 1.2 bar avec l'outil d'épreuve et asperger d'eau savonneuse.",
+              "Vérifier si le joint torique de raccord rapide d'intercooler est pincé ou absent."
+            ]
+          },
+          {
+            cause: "Grippage de la géométrie variable du turbo ou capsule N75 HS",
+            probability: 12,
+            gravity: "Élevée",
+            quickCheck: "Manque de mouvement du levier de géométrie variable relié à la wastegate.",
+            tests: [
+              "Brancher une pompe à dépression manuelle Mityvac sur la capsule du turbo.",
+              "Vérifier que la tige se déplace de façon fluide sur toute sa course sans point dur.",
+              "Contrôler la valeur de dépression émise par l'électrovanne N75 à l'oscilloscope / multimètre."
+            ]
+          },
+          {
+            cause: "Ailette de turbine de turbo endommagée / Jeu axial excessif",
+            probability: 6,
+            gravity: "Critique",
+            quickCheck: "Jeu important détecté au doigt sur l'axe de turbine (durite d'admission déposée).",
+            tests: [
+              "Déposer la durite d'entrée d'air du turbo à froid.",
+              "Vérifier le jeu radial et axial à la main (le jeu axial doit être quasi nul).",
+              "Inspecter la présence d'impacts de corps étrangers sur les pales de roue compresseur."
+            ]
+          }
+        ],
+        requiredDiagnosticTools: ["Pompe à dépression manuelle (Mityvac)", "Valise diag pour lecture de pression de suralimentation en temps réel", "Outil de mise sous pression du circuit d'air"]
+      },
+      {
+        id: "DIAG-INJECT",
+        title: "Démarrage Difficile à Froid + Ralenti Instable + Fumée Blanche",
+        symptoms: ["Rattrapage difficile du démarreur", "Odeur forte de gazole non brûlé à l'échappement", "Instabilité régime à froid (800-1100 tr/min)"],
+        dtcCodes: ["P0087 - Pression de rampe/système trop basse", "P0300 - Ratés d'allumage multiples", "P0683 - Boîtier préchauffage"],
+        category: "Injection & Carburant",
+        hypotheses: [
+          {
+            cause: "Fuite interne excessive sur le retour d'un ou plusieurs injecteurs",
+            probability: 60,
+            gravity: "Élevée",
+            quickCheck: "Test des éprouvettes graduées raccordées aux retours d'injecteurs sous démarreur.",
+            tests: [
+              "Monter le kit d'éprouvettes graduées sur le retour des 4/6 injecteurs.",
+              "Faire tourner le démarreur pendant 15 secondes sans démarrer (ou au ralenti 1 min).",
+              "Comparer les volumes : un injecteur défectueux remplit son éprouvette 3 à 5 fois plus vite."
+            ]
+          },
+          {
+            cause: "Bougies de préchauffage grillées ou relais de commande HS",
+            probability: 28,
+            gravity: "Faible",
+            quickCheck: "Mesure de résistance de chaque bougie de préchauffage débranchée.",
+            tests: [
+              "Déconnecter les faisceaux de bougies de préchauffage.",
+              "Mesurer la résistance entre la tête de bougie et la masse (Valeur cible : 0.5 Ω à 1.5 Ω).",
+              "Si R = Infini (OL), la bougie est coupée et hors service."
+            ]
+          },
+          {
+            cause: "Prise d'air sur le circuit basse pression de carburant",
+            probability: 12,
+            gravity: "Moyenne",
+            quickCheck: "Bulles d'air visibles dans les durites transparentes de gazole ou poire d'amorçage molle.",
+            tests: [
+              "Pomper sur la poire d'amorçage jusqu'à ce qu'elle devienne dure.",
+              "Observer si la poire se ramollit rapidement sans action.",
+              "Vérifier le bon serrage du couvercle de filtre à gazole et la présence du joint torique neuf."
+            ]
+          }
+        ],
+        requiredDiagnosticTools: ["Kit d'éprouvettes de retour d'injecteurs Common Rail", "Multimètre numérique (Mesure d'ohms)", "Manomètre de pression BP/HP gazole"]
+      },
+      {
+        id: "DIAG-TRAIN",
+        title: "Claquement Métallique Récurrent sur Chaussée Dégradée / Virage",
+        symptoms: ["Bruit 'cloc-cloc' sur pavés ou ralentisseurs", "Flou dans la trajectoire à haute vitesse", "Vibrations dans le plancher"],
+        dtcCodes: ["Aucun DTC (Panne purement mécanique / Liaison au sol)"],
+        category: "Train Roulant & Suspension",
+        hypotheses: [
+          {
+            cause: "Rotules de biellettes de barre stabilisatrice usées (Jeu aux rotules)",
+            probability: 70,
+            gravity: "Faible",
+            quickCheck: "Contrainte manuelle au démonte-pneu sur la biellette, véhicule roues pendantes.",
+            tests: [
+              "Lever le véhicule et secouer vigoureusement la roue à 12h-6h et 9h-3h.",
+              "Glisser un démonte-pneu entre la barre stabilisatrice et la biellette pour détecter le jeu axial.",
+              "Contrôler l'état des soufflets en caoutchouc (déchirure = fuite de graisse = usure)."
+            ]
+          },
+          {
+            cause: "Silentblocs de triangle de suspension (bras inférieur) déchirés",
+            probability: 20,
+            gravity: "Moyenne",
+            quickCheck: "Roue qui recule visiblement lors d'un freinage appuyé à très basse vitesse.",
+            tests: [
+              "Appliquer un bras de levier avec un pinson/démonte-pneu sur le silentbloc d'articulation.",
+              "Rechercher des craquelures ou un décollement du caoutchouc de la bague métallique.",
+              "Contrôler l'alignement de la géométrie du train avant."
+            ]
+          },
+          {
+            cause: "Butée tournante d'amortisseur (Coupelle) grippée ou détruite",
+            probability: 10,
+            gravity: "Moyenne",
+            quickCheck: "Bruit de ressort qui 'saute' ou grince lors du braquage des roues à l'arrêt.",
+            tests: [
+              "Mettre un opérateur au volant qui tourne le volant de butée en butée.",
+              "Poser la main sur la spire du ressort d'amortisseur : ressentir les saccades de rotation.",
+              "Inspecter l'état visuel du roulement supérieur sous le capot."
+            ]
+          }
+        ],
+        requiredDiagnosticTools: ["Pince de contrôle / Démonte-pneu plat", "Pont élévateur atelier avec plaques de jeux", "Clé à chocs & Arrache-rotule"]
+      }
+    ];
+
+    function App() {
+      const [activeTab, setActiveTab] = React.useState('repairs'); // 'repairs', 'diagnostics', 'or_builder', 'tools'
+      const [searchTerm, setSearchTerm] = React.useState('');
+      const [selectedCategory, setSelectedCategory] = React.useState('ALL');
+      const [selectedRepairModal, setSelectedRepairModal] = React.useState(null);
+      
+      // OR Builder State (Ordre de Réparation)
+      const [clientVehicle, setClientVehicle] = React.useState({
+        immat: 'AB-123-CD',
+        brandModel: 'Peugeot 308 II 2.0 BlueHDi 150ch',
+        mileage: '142 500 km',
+        vin: 'VF33AHXRXH1234567',
+        clientName: 'Dupont Marc',
+        orNumber: 'OR-2026-0892'
+      });
+      const [orCart, setOrCart] = React.useState([]);
+      
+      // Diagnostic Interactive State
+      const [selectedDiag, setSelectedDiag] = React.useState(DIAGNOSTIC_DATABASE[0]);
+      const [completedDiagSteps, setCompletedDiagSteps] = React.useState({});
+      const [filterDtc, setFilterDtc] = React.useState('');
+
+      // Add repair to OR
+      const addToOR = (repair) => {
+        if (!orCart.some(item => item.id === repair.id)) {
+          setOrCart([...orCart, repair]);
+        }
+      };
+
+      const removeFromOR = (id) => {
+        setOrCart(orCart.filter(item => item.id !== id));
+      };
+
+      // Toggle Diagnostic Test completion
+      const toggleTestStep = (diagId, causeIndex, testIndex) => {
+        const key = `${diagId}-${causeIndex}-${testIndex}`;
+        setCompletedDiagSteps(prev => ({
+          ...prev,
+          [key]: !prev[key]
+        }));
+      };
+
+      // Filter repairs
+      const filteredRepairs = REPAIR_DATA.filter(repair => {
+        const matchesSearch = repair.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                              repair.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              repair.category.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = selectedCategory === 'ALL' || repair.category === selectedCategory;
+        return matchesSearch && matchesCategory;
+      });
+
+      // Filter diagnostics
+      const filteredDiagnostics = DIAGNOSTIC_DATABASE.filter(diag => {
+        const matchesText = diag.title.toLowerCase().includes(filterDtc.toLowerCase()) ||
+                            diag.dtcCodes.some(code => code.toLowerCase().includes(filterDtc.toLowerCase())) ||
+                            diag.symptoms.some(symp => symp.toLowerCase().includes(filterDtc.toLowerCase()));
+        return matchesText;
+      });
+
+      // Calculate total OR shop time
+      const totalORTimeMinutes = orCart.reduce((acc, curr) => acc + curr.durationMinutes, 0);
+      const totalORTimeFormatted = `${Math.floor(totalORTimeMinutes / 60)}h ${totalORTimeMinutes % 60}min`;
+
+      // Aggregate mandatory tools from OR cart
+      const aggregatedORBarTools = Array.from(new Set(orCart.flatMap(item => item.mandatoryTools)));
+
+      return (
+        <div className="min-h-screen flex flex-col bg-slate-950">
+          {/* Header Bar */}
+          <header className="bg-slate-900 border-b border-slate-800 px-4 py-3 sticky top-0 z-30 shadow-lg no-print">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-slate-950 font-bold text-xl shadow-md shadow-orange-500/20 font-chakra">
+                  <i className="fa-solid fa-wrench"></i>
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold font-chakra tracking-wide flex items-center gap-2">
+                    AUTOTECH <span className="text-amber-400">PRO</span>
+                    <span className="text-xs font-normal px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">Garage Workspace</span>
+                  </h1>
+                  <p className="text-xs text-slate-400">Préparation d'Interventions & Moteur Diagnostic Avancé</p>
+                </div>
+              </div>
+
+              {/* Navigation Tabs */}
+              <nav className="flex items-center gap-1 bg-slate-950 p-1.5 rounded-xl border border-slate-800 overflow-x-auto">
+                <button 
+                  onClick={() => setActiveTab('repairs')}
+                  className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-2 whitespace-nowrap ${
+                    activeTab === 'repairs' ? 'bg-amber-500 text-slate-950 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  }`}
+                >
+                  <i className="fa-solid fa-screwdriver-wrench"></i>
+                  <span>Fiches Réparations</span>
+                  <span className="px-1.5 py-0.2 text-[10px] bg-slate-900 text-slate-300 rounded-full font-bold">{REPAIR_DATA.length}</span>
+                </button>
+
+                <button 
+                  onClick={() => setActiveTab('diagnostics')}
+                  className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-2 whitespace-nowrap ${
+                    activeTab === 'diagnostics' ? 'bg-amber-500 text-slate-950 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  }`}
+                >
+                  <i className="fa-solid fa-microchip text-sky-400"></i>
+                  <span>Assistant Diagnostic</span>
+                  <span className="px-1.5 py-0.2 text-[10px] bg-sky-950 text-sky-300 rounded-full font-bold border border-sky-500/30">{DIAGNOSTIC_DATABASE.length}</span>
+                </button>
+
+                <button 
+                  onClick={() => setActiveTab('or_builder')}
+                  className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-2 whitespace-nowrap relative ${
+                    activeTab === 'or_builder' ? 'bg-amber-500 text-slate-950 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  }`}
+                >
+                  <i className="fa-solid fa-clipboard-list"></i>
+                  <span>Ordre de Réparation</span>
+                  {orCart.length > 0 && (
+                    <span className="w-5 h-5 bg-orange-600 text-white rounded-full text-[10px] flex items-center justify-center font-bold animate-pulse">
+                      {orCart.length}
+                    </span>
+                  )}
+                </button>
+
+                <button 
+                  onClick={() => setActiveTab('tools')}
+                  className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-2 whitespace-nowrap ${
+                    activeTab === 'tools' ? 'bg-amber-500 text-slate-950 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  }`}
+                >
+                  <i className="fa-solid fa-toolbox"></i>
+                  <span>Matériel Atelier</span>
+                </button>
+              </nav>
+            </div>
+          </header>
+
+          {/* Main Content Workspace */}
+          <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
+            {}
+            {activeTab === 'repairs' && (
+              <div className="space-y-6">
+                {/* Search & Filter Bar */}
+                <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-md flex flex-col md:flex-row gap-4 items-center justify-between">
+                  <div className="relative w-full md:w-96">
+                    <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                    <input 
+                      type="text" 
+                      placeholder="Rechercher une intervention (ex: distribution, frein...)"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-amber-500 transition"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
+                    <span className="text-xs text-slate-400 font-medium whitespace-nowrap">Catégorie :</span>
+                    <button 
+                      onClick={() => setSelectedCategory('ALL')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
+                        selectedCategory === 'ALL' ? 'bg-slate-800 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:bg-slate-800/50'
+                      }`}
+                    >
+                      Toutes ({REPAIR_DATA.length})
+                    </button>
+                    {Array.from(new Set(REPAIR_DATA.map(r => r.category))).map(cat => (
+                      <button 
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
+                          selectedCategory === cat ? 'bg-slate-800 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:bg-slate-800/50'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Grid of Repair Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {filteredRepairs.map(repair => {
+                    const isAdded = orCart.some(item => item.id === repair.id);
+                    return (
+                      <div 
+                        key={repair.id}
+                        className="bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition shadow-lg flex flex-col justify-between group"
+                      >
+                        <div>
+                          {/* Header badges */}
+                          <div className="flex items-start justify-between gap-2 mb-3">
+                            <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-md border ${repair.badgeColor}`}>
+                              {repair.category}
+                            </span>
+                            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-md border ${repair.riskColor}`}>
+                              ENJEU : {repair.riskLevel}
+                            </span>
+                          </div>
+
+                          <h3 className="text-lg font-bold font-chakra text-slate-100 group-hover:text-amber-400 transition mb-2">
+                            {repair.title}
+                          </h3>
+
+                          <p className="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">
+                            {repair.description}
+                          </p>
+
+                          {/* Quick Stats Grid */}
+                          <div className="grid grid-cols-2 gap-3 mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+                            <div>
+                              <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Durée Moyenne Barèmée</p>
+                              <p className="text-sm font-bold text-amber-400 flex items-center gap-1.5 mt-0.5">
+                                <i className="fa-regular fa-clock text-xs"></i>
+                                {repair.formattedDuration}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Fréquence Atelier</p>
+                              <p className="text-sm font-semibold text-slate-200 flex items-center gap-1.5 mt-0.5">
+                                <i className="fa-solid fa-chart-line text-xs text-sky-400"></i>
+                                {repair.frequency}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Mandatory Tools Preview */}
+                          <div className="mb-4">
+                            <p className="text-xs font-semibold text-slate-300 mb-2 flex items-center gap-1.5">
+                              <i className="fa-solid fa-toolbox text-amber-500"></i>
+                              Matériel Obligatoire ({repair.mandatoryTools.length}) :
+                            </p>
+                            <ul className="text-xs text-slate-400 space-y-1">
+                              {repair.mandatoryTools.slice(0, 3).map((tool, idx) => (
+                                <li key={idx} className="flex items-center gap-2 truncate">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                  <span className="truncate">{tool}</span>
+                                </li>
+                              ))}
+                              {repair.mandatoryTools.length > 3 && (
+                                <li className="text-[11px] text-slate-500 italic pl-3.5">
+                                  + {repair.mandatoryTools.length - 3} autres outils spécifiques...
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="pt-4 border-t border-slate-800/80 flex items-center gap-3">
+                          <button 
+                            onClick={() => setSelectedRepairModal(repair)}
+                            className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl transition flex items-center justify-center gap-2"
+                          >
+                            <i className="fa-solid fa-list-check text-amber-400"></i>
+                            Fiche Technique Completes
+                          </button>
+
+                          <button 
+                            onClick={() => isAdded ? removeFromOR(repair.id) : addToOR(repair)}
+                            className={`px-4 py-2.5 text-xs font-bold rounded-xl transition flex items-center gap-2 whitespace-nowrap ${
+                              isAdded 
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30' 
+                                : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/10'
+                            }`}
+                          >
+                            <i className={`fa-solid ${isAdded ? 'fa-check' : 'fa-plus'}`}></i>
+                            {isAdded ? 'Ajouté à l\'O.R.' : 'Préparer O.R.'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {}
+            {activeTab === 'diagnostics' && (
+              <div className="space-y-6">
+                {/* Diagnostic Search and Selection Banner */}
+                <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-sky-950/40 p-5 rounded-2xl border border-slate-800 shadow-md">
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+                    <div>
+                      <h2 className="text-xl font-bold font-chakra text-slate-100 flex items-center gap-2">
+                        <i className="fa-solid fa-microchip text-sky-400"></i>
+                        Moteur de Diagnostic & Détection de Pannes
+                      </h2>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Analyse les symptômes, répertorie les critères de panne, hiérarchise les suppositions et guide les tests d'atelier.
+                      </p>
+                    </div>
+
+                    <div className="w-full md:w-80">
+                      <div className="relative">
+                        <i className="fa-solid fa-code-fault absolute left-3 top-1/2 -translate-y-1/2 text-sky-400 text-xs"></i>
+                        <input 
+                          type="text" 
+                          placeholder="Code DTC ou symptôme (ex: P0299, sifflement...)"
+                          value={filterDtc}
+                          onChange={(e) => setFilterDtc(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 text-sky-300 text-xs rounded-xl pl-9 pr-3 py-2 focus:outline-none focus:border-sky-500 transition placeholder:text-slate-600"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Diag Selector Tabs */}
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    {filteredDiagnostics.map(diag => (
+                      <button
+                        key={diag.id}
+                        onClick={() => setSelectedDiag(diag)}
+                        className={`px-4 py-2 rounded-xl text-xs font-semibold transition whitespace-nowrap border ${
+                          selectedDiag.id === diag.id 
+                            ? 'bg-sky-500/20 text-sky-300 border-sky-500/50 shadow-md' 
+                            : 'bg-slate-950/60 text-slate-400 border-slate-800 hover:text-slate-200'
+                        }`}
+                      >
+                        <i className="fa-solid fa-stethoscope mr-2 text-sky-400"></i>
+                        {diag.title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Selected Diagnostic Detailed View */}
+                {selectedDiag && (
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Left Column: Symptoms, DTC, & Tools */}
+                    <div className="space-y-6">
+                      {/* Symptoms Card */}
+                      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                        <h3 className="text-sm font-bold font-chakra text-amber-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                          <i className="fa-solid fa-triangle-exclamation text-amber-500"></i>
+                          Symptômes & Relevés Client
+                        </h3>
+                        <ul className="space-y-2">
+                          {selectedDiag.symptoms.map((symptom, idx) => (
+                            <li key={idx} className="bg-slate-950 p-3 rounded-xl border border-slate-800/80 text-xs text-slate-200 flex items-start gap-2.5">
+                              <i className="fa-solid fa-volume-high text-amber-500 text-xs mt-0.5"></i>
+                              <span>{symptom}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* DTC Codes Card */}
+                      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                        <h3 className="text-sm font-bold font-chakra text-sky-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                          <i className="fa-solid fa-plug-circle-exclamation"></i>
+                          Codes Défauts OBD (DTC)
+                        </h3>
+                        <div className="space-y-2">
+                          {selectedDiag.dtcCodes.map((dtc, idx) => (
+                            <div key={idx} className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-xs text-sky-300 font-mono flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-sky-400"></span>
+                              <span>{dtc}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Required Diagnostic Tools */}
+                      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                        <h3 className="text-sm font-bold font-chakra text-slate-200 uppercase tracking-wider mb-3 flex items-center gap-2">
+                          <i className="fa-solid fa-toolbox text-amber-400"></i>
+                          Outillage Diag Requis
+                        </h3>
+                        <ul className="space-y-2 text-xs text-slate-300">
+                          {selectedDiag.requiredDiagnosticTools.map((tool, idx) => (
+                            <li key={idx} className="flex items-center gap-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800/60">
+                              <i className="fa-solid fa-circle-check text-emerald-400"></i>
+                              <span>{tool}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Right Column (2 cols): Hypotheses & Step-by-Step Test Protocols */}
+                    <div className="lg:col-span-2 space-y-6">
+                      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                        <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                          <div>
+                            <h3 className="text-base font-bold font-chakra text-slate-100 flex items-center gap-2">
+                              <i className="fa-solid fa-diagram-project text-amber-400"></i>
+                              Arbre d'Hypothèses & Suppositions de Pannes
+                            </h3>
+                            <p className="text-xs text-slate-400">Classées par probabilité statistique et gravité potentielle</p>
+                          </div>
+                        </div>
+
+                        {/* List of Hypotheses */}
+                        <div className="space-y-6">
+                          {selectedDiag.hypotheses.map((hypo, causeIdx) => (
+                            <div key={causeIdx} className="bg-slate-950 rounded-2xl p-4 border border-slate-800 space-y-3">
+                              {/* Hypothesis Header */}
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center font-bold text-amber-400 text-sm font-chakra">
+                                    {hypo.probability}%
+                                  </div>
+                                  <div>
+                                    <h4 className="text-sm font-bold text-slate-100">{hypo.cause}</h4>
+                                    <p className="text-xs text-slate-400 font-medium">
+                                      Gravité : <span className={hypo.gravity === 'Critique' ? 'text-red-400 font-bold' : hypo.gravity === 'Élevée' ? 'text-orange-400 font-semibold' : 'text-amber-400'}>{hypo.gravity}</span>
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Quick Check Tip */}
+                              <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl text-xs text-amber-200/90 flex items-start gap-2">
+                                <i className="fa-solid fa-bolt text-amber-400 text-sm mt-0.5"></i>
+                                <div>
+                                  <span className="font-bold text-amber-300">Contrôle Rapide (30 sec) : </span>
+                                  {hypo.quickCheck}
+                                </div>
+                              </div>
+
+                              {/* Guided Physical Test Protocol */}
+                              <div>
+                                <h5 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                  <i className="fa-solid fa-list-check text-sky-400"></i>
+                                  Protocole de Vérification Pas-à-Pas :
+                                </h5>
+                                <div className="space-y-2">
+                                  {hypo.tests.map((testStep, testIdx) => {
+                                    const key = `${selectedDiag.id}-${causeIdx}-${testIdx}`;
+                                    const isDone = !!completedDiagSteps[key];
+                                    return (
+                                      <div 
+                                        key={testIdx}
+                                        onClick={() => toggleTestStep(selectedDiag.id, causeIdx, testIdx)}
+                                        className={`p-3 rounded-xl border text-xs cursor-pointer transition flex items-start gap-3 ${
+                                          isDone 
+                                            ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200' 
+                                            : 'bg-slate-900 border-slate-800/80 hover:border-slate-700 text-slate-300'
+                                        }`}
+                                      >
+                                        <div className={`w-5 h-5 rounded-lg flex items-center justify-center text-xs mt-0.5 font-bold transition ${
+                                          isDone ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400 border border-slate-700'
+                                        }`}>
+                                          {isDone ? <i className="fa-solid fa-check"></i> : testIdx + 1}
+                                        </div>
+                                        <span className={`flex-1 leading-relaxed ${isDone ? 'line-through text-emerald-400/80' : ''}`}>
+                                          {testStep}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {}
+            {activeTab === 'or_builder' && (
+              <div className="space-y-6">
+                <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4 no-print">
+                  <div>
+                    <h2 className="text-xl font-bold font-chakra text-slate-100 flex items-center gap-2">
+                      <i className="fa-solid fa-file-signature text-amber-400"></i>
+                      Générateur d'Ordre de Réparation & Fiche d'Atelier
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Assemble les travaux à effectuer, calcule le temps global et consolide l'outillage obligatoire.
+                    </p>
+                  </div>
+
+                  <button 
+                    onClick={() => window.print()}
+                    className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2"
+                  >
+                    <i className="fa-solid fa-print"></i>
+                    Imprimer Fiche Atelier / O.R.
+                  </button>
+                </div>
+
+                {/* Printable Order Form View */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6 print:bg-white print:text-black print:p-0 print:border-none">
+                  {/* Vehicle & Client Info Form */}
+                  <div className="border-b border-slate-800 pb-6 print:border-black">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold font-chakra text-amber-400 print:text-black">GARAGE AUTOTECH PRO</h3>
+                        <p className="text-xs text-slate-400 print:text-gray-600">Fiche de Travaux Atelier & Préparation de Matériel</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-mono bg-slate-950 px-3 py-1 rounded-lg border border-slate-800 text-slate-300 print:border-black print:text-black">
+                          {clientVehicle.orNumber}
+                        </span>
+                        <p className="text-[10px] text-slate-500 mt-1 print:text-gray-500">Date : {new Date().toLocaleDateString('fr-FR')}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 no-print">
+                      <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase">Immatriculation</label>
+                        <input 
+                          type="text" 
+                          value={clientVehicle.immat}
+                          onChange={(e) => setClientVehicle({...clientVehicle, immat: e.target.value})}
+                          className="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold rounded-xl px-3 py-2 mt-1 focus:outline-none focus:border-amber-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase">Marque / Modèle / Moteur</label>
+                        <input 
+                          type="text" 
+                          value={clientVehicle.brandModel}
+                          onChange={(e) => setClientVehicle({...clientVehicle, brandModel: e.target.value})}
+                          className="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold rounded-xl px-3 py-2 mt-1 focus:outline-none focus:border-amber-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase">Kilométrage Relevé</label>
+                        <input 
+                          type="text" 
+                          value={clientVehicle.mileage}
+                          onChange={(e) => setClientVehicle({...clientVehicle, mileage: e.target.value})}
+                          className="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold rounded-xl px-3 py-2 mt-1 focus:outline-none focus:border-amber-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Print Only Vehicle Display */}
+                    <div className="hidden print:grid print:grid-cols-3 print:gap-4 text-xs font-bold border p-3 rounded my-2">
+                      <div>Immat : {clientVehicle.immat}</div>
+                      <div>Véhicule : {clientVehicle.brandModel}</div>
+                      <div>km : {clientVehicle.mileage}</div>
+                    </div>
+                  </div>
+
+                  {/* Selected Repairs Table */}
+                  <div>
+                    <h4 className="text-sm font-bold font-chakra text-slate-200 uppercase tracking-wider mb-3 flex items-center justify-between">
+                      <span>Interventions Programmées ({orCart.length})</span>
+                      <span className="text-amber-400 text-xs font-normal">Temps Atelier Cumulé : {totalORTimeFormatted}</span>
+                    </h4>
+
+                    {orCart.length === 0 ? (
+                      <div className="bg-slate-950 p-8 rounded-2xl border border-slate-800 text-center text-slate-500 text-xs">
+                        <i className="fa-solid fa-clipboard-question text-3xl mb-2 text-slate-700"></i>
+                        <p>Aucune intervention ajoutée à l'Ordre de Réparation.</p>
+                        <p className="mt-1 text-slate-600">Allez sur l'onglet "Fiches Réparations" pour sélectionner des travaux.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {orCart.map((item, idx) => (
+                          <div key={item.id} className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="w-5 h-5 bg-amber-500/20 text-amber-400 font-bold rounded text-xs flex items-center justify-center font-chakra">
+                                  {idx + 1}
+                                </span>
+                                <h5 className="font-bold text-slate-100 text-sm">{item.title}</h5>
+                              </div>
+                              <p className="text-xs text-slate-400 pl-7">{item.description}</p>
+                            </div>
+
+                            <div className="flex items-center gap-4 pl-7 md:pl-0">
+                              <div className="text-right">
+                                <p className="text-[10px] text-slate-500 uppercase">Temps estimé</p>
+                                <p className="text-xs font-bold text-amber-400">{item.formattedDuration}</p>
+                              </div>
+
+                              <button 
+                                onClick={() => removeFromOR(item.id)}
+                                className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition text-xs no-print"
+                                title="Supprimer"
+                              >
+                                <i className="fa-solid fa-trash"></i>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Aggregated Mandatory Tools Checklist */}
+                  {aggregatedORBarTools.length > 0 && (
+                    <div className="pt-4 border-t border-slate-800">
+                      <h4 className="text-sm font-bold font-chakra text-amber-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i className="fa-solid fa-toolbox"></i>
+                        Récapitulatif de Matériel Spécifique à Sortir pour cet O.R. :
+                      </h4>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        {aggregatedORBarTools.map((tool, idx) => (
+                          <div key={idx} className="flex items-center gap-2.5 text-xs text-slate-300">
+                            <input type="checkbox" id={`tool-or-${idx}`} className="rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-amber-500" />
+                            <label htmlFor={`tool-or-${idx}`} className="cursor-pointer">{tool}</label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {}
+            {activeTab === 'tools' && (
+              <div className="space-y-6">
+                <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-md">
+                  <h2 className="text-xl font-bold font-chakra text-slate-100 flex items-center gap-2">
+                    <i className="fa-solid fa-toolbox text-amber-400"></i>
+                    Outillage Spécialisé & Équipements Atelier Obligatoires
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Inventaire des équipements indispensables pour les interventions complexes, consignes de sécurité et entretien.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-lg">
+                      <i className="fa-solid fa-[#fa0] fa-key"></i>
+                    </div>
+                    <h3 className="font-bold font-chakra text-slate-100 text-base">Piges de Calage Distribution</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Kit universel et valises spécifiques par marque (PSA, VAG, Renault, Ford). Obligatoires pour immobiliser vilebrequin et AAC au PMH.
+                    </p>
+                    <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/80 text-[11px] text-amber-300">
+                      <strong>Règle d'or :</strong> Ne jamais desserrer ou serrer la vis de poulie Damper avec les piges en place (risque de tordre la pige ou le carter).
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3">
+                    <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/30 flex items-center justify-center font-bold text-lg">
+                      <i className="fa-solid fa-laptop-code"></i>
+                    </div>
+                    <h3 className="font-bold font-chakra text-slate-100 text-base">Valise Diag & Oscilloscope</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Indispensables pour le retrait des pistons EPB, l'apprentissage des vannes EGR, le codage d'injecteurs et l'analyse de pression rail.
+                    </p>
+                    <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/80 text-[11px] text-sky-300">
+                      <strong>Conseil :</strong> Toujours maintenir la batterie du véhicule sous chargeur stabilisé (ex: Gysflash) lors des diag prolongés.
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-lg">
+                      <i className="fa-solid fa-compress"></i>
+                    </div>
+                    <h3 className="font-bold font-chakra text-slate-100 text-base">Repousse-Pistons & Outil SAC</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Kit repousse-piston d'étrier à pas inversés pour freins arrière et centreur d'embrayage avec dispositif de réarmement pour mécanisme SAC.
+                    </p>
+                    <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/80 text-[11px] text-emerald-300">
+                      <strong>Entretien :</strong> Nettoyer et huiler les filetages des vis de presse régulièrement pour éviter le grippage sous contrainte.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </main>
+
+          {}
+          {selectedRepairModal && (
+            <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-6">
+                <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+                  <div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${selectedRepairModal.badgeColor}`}>
+                      {selectedRepairModal.category}
+                    </span>
+                    <h3 className="text-xl font-bold font-chakra text-slate-100 mt-1">
+                      {selectedRepairModal.title}
+                    </h3>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedRepairModal(null)}
+                    className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl transition"
+                  >
+                    <i className="fa-solid fa-xmark text-lg"></i>
+                  </button>
+                </div>
+
+                {/* Key Metrics */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                  <div>
+                    <p className="text-[10px] text-slate-500 uppercase font-semibold">Durée Barèmée</p>
+                    <p className="text-sm font-bold text-amber-400">{selectedRepairModal.formattedDuration}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500 uppercase font-semibold">Niveau d'Enjeu</p>
+                    <p className="text-sm font-bold text-red-400">{selectedRepairModal.riskLevel}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500 uppercase font-semibold">Fréquence Garage</p>
+                    <p className="text-sm font-bold text-slate-200">{selectedRepairModal.frequency}</p>
+                  </div>
+                </div>
+
+                {/* Mandatory Tools */}
+                <div>
+                  <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <i className="fa-solid fa-toolbox"></i>
+                    Outillage Obligatoire
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {selectedRepairModal.mandatoryTools.map((tool, idx) => (
+                      <div key={idx} className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 text-xs text-slate-300 flex items-center gap-2">
+                        <i className="fa-solid fa-wrench text-amber-500 text-[10px]"></i>
+                        <span>{tool}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Consumables */}
+                <div>
+                  <h4 className="text-xs font-bold text-sky-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <i className="fa-solid fa-box-open"></i>
+                    Pièces & Consumables à Prévoir
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {selectedRepairModal.consumables.map((item, idx) => (
+                      <div key={idx} className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 text-xs text-slate-300 flex items-center gap-2">
+                        <i className="fa-solid fa-oil-can text-sky-400 text-[10px]"></i>
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Check-list Pré-Intervention */}
+                <div>
+                  <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <i className="fa-solid fa-list-check"></i>
+                    Check-list d'Exécution Pas-à-Pas
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedRepairModal.preCheckList.map((step, idx) => (
+                      <div key={idx} className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-200 flex items-start gap-2.5">
+                        <span className="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-[10px] mt-0.5">
+                          {idx + 1}
+                        </span>
+                        <span className="flex-1 leading-relaxed">{step}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pro Tips / Pièges à éviter */}
+                <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl text-xs text-amber-200 flex items-start gap-3">
+                  <i className="fa-solid fa-lightbulb text-amber-400 text-base mt-0.5"></i>
+                  <div>
+                    <strong className="text-amber-300 font-bold block mb-0.5">Conseil Expert Atelier :</strong>
+                    {selectedRepairModal.proTips}
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2 border-t border-slate-800">
+                  <button 
+                    onClick={() => {
+                      addToOR(selectedRepairModal);
+                      setSelectedRepairModal(null);
+                    }}
+                    className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-md transition"
+                  >
+                    Ajouter cette tâche à l'Ordre de Réparation
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
