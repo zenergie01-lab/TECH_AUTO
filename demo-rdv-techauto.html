@@ -226,6 +226,19 @@ main{max-width:1280px;margin:0 auto;padding-block:20px 48px;padding-inline:16px}
 .blk.hl{animation:pulse 1s ease-in-out 3}
 @keyframes pulse{50%{box-shadow:0 0 0 4px var(--signal)}}
 @media (prefers-reduced-motion:reduce){.blk.hl{animation:none;box-shadow:0 0 0 3px var(--signal)}}
+/* Glisser-déposer : bloc saisi, fantôme qui suit le pointeur, aperçu de la place d'arrivée, barre de jours */
+.blk.mv{cursor:grab;touch-action:pan-x pan-y}
+.blk.drag-src{opacity:.35}
+.dghost{position:fixed;z-index:70;pointer-events:none;opacity:.9;box-shadow:0 8px 24px color-mix(in srgb,var(--ink) 30%,transparent);transform:rotate(-1.5deg);cursor:grabbing}
+.dprev{position:absolute;left:4px;right:4px;border-radius:7px;border:2px dashed var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);z-index:4;pointer-events:none;font-size:.72rem;padding:2px 6px;color:var(--ink)}
+.dprev.ko{border-color:var(--x-c);background:color-mix(in srgb,var(--x-c) 12%,transparent)}
+body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
+.dstrip{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 8px;margin-bottom:10px}
+.dchip{flex:0 0 auto;display:grid;justify-items:center;gap:3px;min-width:64px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:.78rem;cursor:pointer}
+.dchip .load{width:44px;height:5px;border-radius:3px}
+.dchip[aria-current="date"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.dchip.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,var(--surface))}
+.dchip.ko{border-color:var(--x-c);background:color-mix(in srgb,var(--x-c) 12%,var(--surface))}
 .hint{font-size:.85rem;color:var(--muted);margin-top:10px}
 
 .tbl-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
@@ -867,6 +880,7 @@ function renderPlanning(){
     <div class="row"><button class="btn sm" data-act="plan-nav" data-dir="-1" ${idx<=0?'disabled':''} aria-label="Jour précédent">‹</button><button class="btn sm" data-act="plan-nav" data-dir="0">Aujourd'hui</button><button class="btn sm" data-act="plan-nav" data-dir="1" ${idx>=WD.length-1?'disabled':''} aria-label="Jour suivant">›</button></div>
     <div class="meter">Remplissage <span class="load"><i style="width:${Math.round(ld*100)}%"></i></span><b class="mono">${Math.round(ld*100)} %</b></div></div>
   <div class="legend" style="margin-bottom:12px">${['attente','confirme','arrive','encours','termine','facture','absent'].map(pill).join('')}</div>
+  <div class="dstrip" aria-label="Jours : cliquez pour afficher, déposez un RDV pour le déplacer">${WD.slice(Math.max(0,idx-2),Math.max(0,idx-2)+10).map(x=>`<button class="dchip" data-act="plan-day" data-day="${x}" ${x===d?'aria-current="date"':''}><b>${dlabel(x,{weekday:'short',day:'numeric'})}</b><span class="load"><i style="width:${Math.round(dayLoad(x)*100)}%"></i></span></button>`).join('')}</div>
   <div class="pwrap"><div class="pgrid">
     <div style="border-bottom:1px solid var(--line)"></div>
     ${cols.map(c=>`<div class="phead"><b>${c.m.nom}</b><span class="muted small">${c.m.spec}</span><span class="load" title="Charge"><i style="width:${Math.min(100,Math.round(c.load*100))}%"></i></span></div>`).join('')}
@@ -874,13 +888,13 @@ function renderPlanning(){
     ${cols.map(c=>`<div class="pbody" data-act="plan-slot" data-meca="${c.m.id}">
       <div class="lunch" style="top:${top(AM1)}px;height:${(PM0-AM1)/30*rowH}px">Pause déjeuner</div>
       ${d===TODAY&&NOWM>AM0&&NOWM<PM1?`<div class="nowline" style="top:${top(NOWM)}px"></div>`:''}
-      ${c.mine.map(r=>`<button class="blk st-${r.statut}${S.hl===r.id?' hl':''}" style="top:${top(r.start)+1}px;height:${r.dur/30*rowH-3}px" data-act="open-rdv" data-id="${r.id}" title="${esc(prestaTxt(r))} · ${esc(r.client.nom)}">
+      ${c.mine.map(r=>`<button class="blk st-${r.statut}${S.hl===r.id?' hl':''}${movable(r)?' mv':''}" style="top:${top(r.start)+1}px;height:${r.dur/30*rowH-3}px" data-act="open-rdv" data-id="${r.id}" title="${esc(prestaTxt(r))} · ${esc(r.client.nom)}">
         <span class="l1"><span class="mono">${hm(r.start)}${miss.has(r.id)?' <span title="Pièce manquante">⚠️</span>':''}${r.waitlist?' <span title="Liste d\'attente express">🔔</span>':''}</span>${plateHTML(r.veh.plaque,1)}</span>
         ${r.dur>=60?`<span class="who">${esc(r.client.nom)}</span><span class="what">${esc(prestaTxt(r))}</span>`:''}
       </button>`).join('')}
     </div>`).join('')}
   </div></div>
-  <p class="hint">Cliquez sur une case vide pour réserver ce créneau pour ce mécanicien. Cliquez sur un rendez-vous pour le faire avancer : arrivé, en cours, terminé, facturé. ⚠️ = une pièce ne sera pas là à temps (onglet Stock).</p>`;
+  <p class="hint">Glissez un rendez-vous (appui long sur mobile) vers un autre créneau ou un autre mécanicien, ou déposez-le sur un jour de la barre du haut pour changer de date. Cliquez sur une case vide pour réserver ce créneau pour ce mécanicien. Cliquez sur un rendez-vous pour le faire avancer : arrivé, en cours, terminé, facturé. ⚠️ = une pièce ne sera pas là à temps (onglet Stock).</p>`;
 }
 
 function renderListe(){
@@ -1195,6 +1209,7 @@ const ACT={
   'close-all':()=>closeAll(),
   'new-rdv':()=>openModal({}),
   'plan-nav':a=>{const d=+a.dataset.dir,i=WD.indexOf(S.planDay);S.planDay=d===0?WD[0]:WD[Math.max(0,Math.min(WD.length-1,i+d))];renderSec()},
+  'plan-day':a=>{S.planDay=a.dataset.day;renderSec()},
   'plan-slot':(a,e)=>{const y=e.clientY-a.getBoundingClientRect().top;const s=AM0+Math.floor(y/30)*30;if(s>=AM1&&s<PM0)return;if(S.planDay===TODAY&&s<NOWM){toast('Ce créneau est déjà passé.');return}openModal({day:S.planDay,start:s,meca:a.dataset.meca});toast(`Créneau ${hm(s)} pré-réservé pour ${meca(a.dataset.meca).nom} : choisissez la prestation.`)},
   'set-st':a=>{const r=RDVS.find(x=>x.id===+a.dataset.id);const was=r.statut;r.statut=a.dataset.st;S.cancelAsk=false;toast(`${r.veh.plaque} : ${ST[r.statut]}`);
     if(['annule','absent'].includes(r.statut)&&!['annule','absent'].includes(was))freeSlot(r);
@@ -1237,6 +1252,53 @@ const ACT={
   'urg-ok':()=>{CMDS.push({ref:U.ref,q:U.q,date:TODAY,arrivee:TODAY,four:U.reply.c.nom+' (dépannage)',statut:'En cours'});U.reply.ok=true;checkAlerts();renderUrg();if(S.mode==='sec')renderSec();toast('Dépannage noté : pièce attendue aujourd\'hui')}
 };
 document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(!a)return;const f=ACT[a.dataset.act];if(f){f(a,e)}});
+
+/* ---------- Planning : glisser-déposer façon kanban ----------
+   Dans la grille : change l'heure (pas de 30 min) et/ou le mécanicien. Sur la barre de jours : change la date
+   (même heure et même mécanicien si possible, sinon la première place libre du jour). Souris : on tire directement ;
+   tactile : appui long 350 ms pour ne pas gêner le défilement. */
+const PAST=(day,s)=>day<TODAY||(day===TODAY&&s<NOWM);
+function movable(r){return['attente','confirme'].includes(r.statut)&&!PAST(r.date,r.start)}
+function dropSpot(r,day){const pref=[r.meca,...MECAS.map(m=>m.id).filter(id=>id!==r.meca)];
+  if(!PAST(day,r.start)&&isFree(day,r.meca,r.start,r.dur,r.id))return{meca:r.meca,start:r.start};
+  for(const mid of pref)for(let s=AM0;s<PM1;s+=30)if(!PAST(day,s)&&isFree(day,mid,s,r.dur,r.id))return{meca:mid,start:s};return null}
+function moveRdv(r,day,mid,s){if(r.date===day&&r.meca===mid&&r.start===s)return;
+  const old={date:r.date,start:r.start,meca:r.meca};Object.assign(r,{date:day,meca:mid,start:s});
+  if(old.date!==day||old.start!==s){r.rappel=false;if(r.statut==='confirme')queueSms(r.client.tel,smsConf(r),'CONFIRMATION',r.code)}
+  checkAlerts();S.hl=r.id;setTimeout(()=>{S.hl=null},3500);
+  toast(`↔ ${r.veh.plaque} : ${dlabel(day)} à ${hm(s)} avec ${meca(mid).nom}`+(r.statut==='confirme'&&(old.date!==day||old.start!==s)?' · SMS au client en file':''));
+  if(old.date!==day)S.planDay=day;renderSec()}
+let DG=null,dragEnded=0;
+function dgTarget(x,y){const el=document.elementFromPoint(x,y);if(!el)return{};
+  const chip=el.closest('.dchip');if(chip)return{chip};const col=el.closest('.pbody');if(!col)return{};
+  const s=AM0+Math.round((y-DG.dy-col.getBoundingClientRect().top)/30)*30;return{col,s}}
+function dgMove(x,y){const g=DG;g.ghost.style.left=x-g.dx+'px';g.ghost.style.top=y-g.dy+'px';
+  const t=dgTarget(x,y),r=g.r;document.querySelectorAll('.dchip.over,.dchip.ko').forEach(c=>c.classList.remove('over','ko'));g.prev.remove();g.drop=null;
+  if(t.chip){const day=t.chip.dataset.day,sp=dropSpot(r,day);t.chip.classList.add(sp?'over':'ko');if(sp)g.drop={day,...sp}}
+  else if(t.col){const mid=t.col.dataset.meca,s=t.s,ok=!PAST(S.planDay,s)&&isFree(S.planDay,mid,s,r.dur,r.id);
+    g.prev.className='dprev'+(ok?'':' ko');g.prev.style.top=(s-AM0)+1+'px';g.prev.style.height=r.dur-3+'px';
+    g.prev.textContent=ok?`${hm(s)} · ${meca(mid).nom}`:(fits(s,r.dur)?'Occupé':'Hors horaires');t.col.appendChild(g.prev);if(ok)g.drop={day:S.planDay,meca:mid,start:s}}}
+function dgStart(){const g=DG,b=g.el.getBoundingClientRect();g.on=true;g.ghost=g.el.cloneNode(true);g.ghost.classList.add('dghost');g.ghost.classList.remove('hl');
+  Object.assign(g.ghost.style,{width:b.width+'px',height:b.height+'px',right:'auto'});document.body.appendChild(g.ghost);g.prev=document.createElement('div');
+  g.el.classList.add('drag-src');document.body.classList.add('dragging');if(navigator.vibrate&&g.touch)navigator.vibrate(15);dgMove(g.x,g.y)}
+function dgEnd(drop){const g=DG;DG=null;clearTimeout(g.timer);if(!g.on)return;dragEnded=Date.now();
+  g.ghost.remove();g.prev.remove();document.body.classList.remove('dragging');g.el.classList.remove('drag-src');
+  document.querySelectorAll('.dchip.over,.dchip.ko').forEach(c=>c.classList.remove('over','ko'));
+  if(!drop)return;if(g.drop)moveRdv(g.r,g.drop.day,g.drop.meca,g.drop.start);else toast('Place indisponible : le rendez-vous n\'a pas bougé.')}
+document.addEventListener('pointerdown',e=>{const el=e.target.closest('.blk.mv');if(!el||e.button>0||DG)return;
+  const r=RDVS.find(x=>x.id===+el.dataset.id),b=el.getBoundingClientRect();
+  DG={el,r,x:e.clientX,y:e.clientY,dx:e.clientX-b.left,dy:e.clientY-b.top,touch:e.pointerType!=='mouse',on:false};
+  if(DG.touch)DG.timer=setTimeout(()=>DG&&!DG.on&&dgStart(),350)});
+document.addEventListener('pointermove',e=>{if(!DG)return;const far=Math.hypot(e.clientX-DG.x,e.clientY-DG.y)>6;
+  if(!DG.on){if(DG.touch){if(far){clearTimeout(DG.timer);DG=null}return}if(!far)return;DG.x=e.clientX;DG.y=e.clientY;dgStart()}
+  e.preventDefault();dgMove(e.clientX,e.clientY)});
+document.addEventListener('touchmove',e=>{if(DG&&DG.on)e.preventDefault()},{passive:false}); // bloque le défilement pendant le glisser tactile
+document.addEventListener('pointerup',()=>DG&&dgEnd(true));
+document.addEventListener('pointercancel',()=>DG&&dgEnd(false));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&DG)dgEnd(false)});
+document.addEventListener('contextmenu',e=>{if(DG&&DG.touch)e.preventDefault()});
+// Le clic qui suit un dépôt ne doit ni ouvrir la fiche ni pré-réserver la case
+document.addEventListener('click',e=>{if(Date.now()-dragEnded<300){e.stopPropagation();e.preventDefault()}},true);
 document.addEventListener('input',e=>{
   const t=e.target;
   if(t.id==='q'){S.q=t.value;const pos=t.selectionStart;renderSec();const n=$('#q');n.focus();n.setSelectionRange(pos,pos);return}
