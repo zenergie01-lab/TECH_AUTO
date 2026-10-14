@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TECH'AUTO Parcours client</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout : un fil d'atelier vertical en 3 phases (avant · atelier · après), chaque étape = une fiche d'ordre de réparation. */
+:root{
+  --bg:#eceff0; --surface:#ffffff; --sunk:#f4f6f6; --ink:#152028; --muted:#5a6a73; --line:#d3dadd;
+  --accent:#0b6b70; --accent-soft:#d6ebeb; --signal:#efb200; --signal-ink:#1d1600;
+  --ok:#2d7a31; --ok-b:#dcefdc; --demo:#1f5fa8; --demo-b:#dde9f7; --todo:#9a5c00; --todo-b:#fbecd0; --warn:#b3261e; --warn-b:#f8dcda;
+  --plate-band:#1f4fa3;
+  --f-display:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-body:'Barlow','Segoe UI',system-ui,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1418; --surface:#162026; --sunk:#111a1f; --ink:#e3eaed; --muted:#93a3ab; --line:#283439;
+  --accent:#46b8bc; --accent-soft:#173a3c; --signal:#f2c230;
+  --ok:#8fd18f; --ok-b:#16301a; --demo:#8db8ec; --demo-b:#16283d; --todo:#f0b45a; --todo-b:#3a2a10; --warn:#f08b84; --warn-b:#3c1715;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1418; --surface:#162026; --sunk:#111a1f; --ink:#e3eaed; --muted:#93a3ab; --line:#283439;
+  --accent:#46b8bc; --accent-soft:#173a3c; --signal:#f2c230;
+  --ok:#8fd18f; --ok-b:#16301a; --demo:#8db8ec; --demo-b:#16283d; --todo:#f0b45a; --todo-b:#3a2a10; --warn:#f08b84; --warn-b:#3c1715;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;line-height:1.1;margin:0;text-wrap:balance;letter-spacing:.01em}
+p{margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px}
+.label{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;font-weight:600;color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* En-tête */
+header{background:var(--ink);color:var(--bg);padding-block:44px 52px}
+header .wrap{display:grid;gap:18px}
+.brand{font-family:var(--f-display);font-size:1.4rem;letter-spacing:.04em}
+.brand i{font-style:normal;color:var(--signal)}
+header h1{font-size:clamp(2.2rem,6vw,3.6rem);max-width:18ch}
+header p{max-width:62ch;opacity:.85;font-size:1.08rem}
+.plate{display:inline-flex;border:2px solid #111;border-radius:5px;background:#fff;color:#111;font-family:var(--f-mono);font-weight:700;overflow:hidden;width:max-content}
+.plate span{padding:4px 8px;letter-spacing:.05em}.plate b{background:var(--plate-band);color:#fff;font-size:.7rem;display:flex;align-items:center;padding:0 5px}
+
+main{padding-block:36px 64px;display:grid;gap:48px}
+main>section{min-width:0}
+section>h2{font-size:2rem;margin-bottom:6px}
+.lead{color:var(--muted);max-width:68ch;margin-bottom:20px}
+
+/* Analogie */
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.trio article{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:6px;align-content:start}
+.trio .ico{font-size:1.6rem}
+.trio h3{font-size:1.3rem}
+.trio p{font-size:.95rem;color:var(--muted)}
+
+/* Schéma des phases */
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.flow>div{padding:16px 18px;display:grid;gap:8px;align-content:start;border-left:1px solid var(--line)}
+.flow>div:first-child{border-left:0}
+.flow h3{font-size:1.25rem}
+.flow ol{margin:0;padding:0;list-style:none;display:grid;gap:4px;font-size:.93rem}
+.flow li{display:flex;gap:8px}
+.flow li span{font-family:var(--f-mono);font-weight:700;color:var(--accent);min-width:1.6em}
+.flow .who{font-size:.85rem;color:var(--muted)}
+
+/* Légende des statuts */
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;padding:2px 10px;border-radius:999px;white-space:nowrap}
+.st::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.st.ok{color:var(--ok);background:var(--ok-b)}.st.demo{color:var(--demo);background:var(--demo-b)}.st.todo{color:var(--todo);background:var(--todo-b)}
+
+/* Étapes */
+.phase{display:grid;gap:14px}
+.phase-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:6px}
+.phase-head h2{font-size:1.9rem}
+.phase-head span{color:var(--muted)}
+.steps{display:grid;gap:12px;position:relative}
+.step{display:grid;grid-template-columns:64px minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.num{background:var(--sunk);border-right:1px dashed var(--line);display:grid;place-items:start center;padding-top:16px;font-family:var(--f-display);font-size:2rem;font-weight:700;color:var(--accent)}
+.body{padding:16px 18px;display:grid;gap:10px;min-width:0}
+.top{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.top h3{font-size:1.35rem;margin-right:auto}
+.meta{display:flex;gap:16px;flex-wrap:wrap;font-size:.88rem;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+.body ul{margin:0;padding-left:18px;display:grid;gap:3px;font-size:.95rem}
+.sms{background:var(--accent-soft);border-radius:14px 14px 14px 4px;padding:9px 13px;font-size:.88rem;max-width:560px}
+.sms::before{content:"SMS · ";font-weight:700;font-family:var(--f-mono);font-size:.75rem;color:var(--accent)}
+.gain{font-size:.9rem;border-left:3px solid var(--signal);padding-left:10px}
+.gain b{font-weight:600}
+
+/* Vigilance */
+.step.vig{border:2px solid var(--warn)}
+.step.vig .num{background:var(--warn-b);color:var(--warn)}
+.vigbox{background:var(--warn-b);border-radius:8px;padding:12px 14px;display:grid;gap:8px;font-size:.93rem}
+.vigbox h4{margin:0;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--warn)}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.cols div{background:var(--surface);border-radius:8px;padding:8px 10px;font-size:.88rem}
+.cols div b{display:block;font-family:var(--f-display);font-size:1.05rem}
+
+/* Tableau des rôles */
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:640px}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+tbody tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+
+/* Données */
+.data{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px}
+.data article{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:8px;align-content:start}
+.data h3{font-size:1.3rem}
+.data ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:.94rem}
+
+footer{border-top:1px solid var(--line);padding-block:22px 34px;color:var(--muted);font-size:.88rem}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+@media (max-width:820px){.trio,.flow,.cols,.data{grid-template-columns:1fr}.flow>div{border-left:0;border-top:1px solid var(--line)}.flow>div:first-child{border-top:0}}
+@media (max-width:520px){.step{grid-template-columns:44px minmax(0,1fr)}.num{font-size:1.5rem}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">TECH<i>'</i>AUTO · Kourou</div>
+    <h1>Le parcours client connecté, de la vitrine à la facture.</h1>
+    <p>Une landing page sert de vitrine au garage. L'application qui lui est jumelée ouvre une communication privilégiée avec chaque client : il réserve, il est prévenu, il sait ce qui a été fait et ce qui l'attend. L'atelier, lui, travaille avec un seul outil, du premier clic jusqu'au paiement.</p>
+    <span class="plate"><b>F</b><span>11 ÉTAPES</span><b>973</b></span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <h2>Le principe en une image</h2>
+    <p class="lead">Trois pièces qui travaillent ensemble, comme un garage bien organisé.</p>
+    <div class="trio">
+      <article><span class="ico">🏪</span><h3>La vitrine</h3><p>La landing page. Elle présente le garage, ses prestations, ses horaires, et donne deux portes d'entrée : réserver en ligne ou appeler la secrétaire.</p></article>
+      <article><span class="ico">🛎️</span><h3>Le comptoir qui ne ferme jamais</h3><p>L'application. Elle prend les rendez-vous, envoie les SMS, guide l'accueil du véhicule, le planning des mécaniciens et la facture.</p></article>
+      <article><span class="ico">📒</span><h3>Le carnet partagé</h3><p>La base de données (aujourd'hui une feuille Google Sheets). Rendez-vous, stock de pièces, SMS : tout le monde lit et écrit dans le même carnet, au même moment.</p></article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Vue d'ensemble</h2>
+    <p class="lead">Le parcours se lit en trois temps. Chaque étape passe le relais à la suivante sans ressaisie.</p>
+    <div class="flow">
+      <div><span class="label">Avant · prise en charge</span><h3>Le client réserve</h3>
+        <ol><li><span>1</span>RDV en ligne</li><li><span>2</span>RDV par téléphone</li><li><span>3</span>Contrôle pièces et délai</li><li><span>4</span>Confirmation par SMS</li><li><span>5</span>Rappel la veille</li></ol>
+        <span class="who">Client · secrétaire · responsable pièces</span></div>
+      <div><span class="label">Pendant · atelier</span><h3>Le véhicule est réparé</h3>
+        <ol><li><span>6</span>Accueil du véhicule</li><li><span>7</span>Planning et ordre de réparation</li><li><span>8</span>Fin d'intervention</li></ol>
+        <span class="who">Secrétaire · chef d'atelier · mécaniciens</span></div>
+      <div><span class="label">Après · restitution</span><h3>Le client repart informé</h3>
+        <ol><li><span>9</span>SMS « véhicule prêt »</li><li><span>10</span>Compte rendu et travaux à prévoir</li><li><span>11</span>Paiement et envoi en comptabilité</li></ol>
+        <span class="who">Secrétaire · client · PDG</span></div>
+    </div>
+    <div class="legend"><span class="st ok">Testé en réel</span><span class="st demo">Visible dans la démo</span><span class="st todo">À développer</span></div>
+  </section>
+
+  <!-- PHASE 1 -->
+  <section class="phase">
+    <div class="phase-head"><h2>Avant · le client réserve</h2><span>étapes 1 à 5</span></div>
+    <div class="steps">
+
+      <article class="step"><div class="num">1</div><div class="body">
+        <div class="top"><h3>Rendez-vous en ligne, aux dates libres</h3><span class="st demo">Démo</span></div>
+        <div class="meta"><span><b>Qui :</b> le client, depuis la vitrine</span><span><b>Quand :</b> 24 h/24, 7 j/7</span></div>
+        <ul>
+          <li>Le client choisit la prestation (vidange, clim, freins…), puis renseigne son véhicule et ses coordonnées.</li>
+          <li>Seuls les créneaux réellement libres s'affichent : un mécanicien disponible pendant toute la durée de l'intervention.</li>
+          <li>Il peut taper une date précise, demander « le plus tôt possible » ou ouvrir le calendrier sur 3 mois.</li>
+          <li>Option liste d'attente : il est prévenu si un client se désiste.</li>
+        </ul>
+        <p class="gain"><b>Gain :</b> chaque réservation en ligne est un appel de moins pour la secrétaire, même le soir et le dimanche.</p>
+      </div></article>
+
+      <article class="step"><div class="num">2</div><div class="body">
+        <div class="top"><h3>Un numéro pour appeler la secrétaire</h3><span class="st ok">Testé</span></div>
+        <div class="meta"><span><b>Qui :</b> la secrétaire, au téléphone</span><span><b>Outil :</b> le même formulaire que le client</span></div>
+        <ul>
+          <li>Le numéro est affiché sur la vitrine pour les clients qui préfèrent parler à quelqu'un.</li>
+          <li>La secrétaire retrouve le client par son nom ou sa plaque : véhicule et coordonnées se remplissent seuls.</li>
+          <li>Un script d'appel en 5 questions guide la conversation (plaque, besoin, symptôme, créneau, portable).</li>
+          <li>Dès l'enregistrement, un SMS de confirmation part directement au client.</li>
+        </ul>
+        <div class="sms">TECH'AUTO Kourou : RDV confirmé le mardi 20 octobre à 08h00 pour Vidange + filtre (AB-123-CD). Réf. TA-1020-14. Pour décaler, appelez l'atelier.</div>
+      </div></article>
+
+      <article class="step vig"><div class="num">3</div><div class="body">
+        <div class="top"><h3>Point de vigilance : pièces en stock et délai d'attente</h3><span class="st demo">Démo + module Sheet</span></div>
+        <div class="meta"><span><b>Qui :</b> automatique, suivi par le responsable pièces</span><span><b>Où :</b> la base de données (Google Sheets)</span></div>
+        <p>Avant de confirmer un rendez-vous, l'application interroge la base de données pour vérifier que la réparation est faisable à cette date : les pièces sont-elles en stock, déjà réservées pour un autre client, ou faut-il les commander ? Pour un garage en Guyane, c'est le point le plus sensible : une pièce venue de métropole met environ 15 jours, plus la douane.</p>
+        <div class="vigbox">
+          <h4>Ce que la connexion doit garantir</h4>
+          <div class="cols">
+            <div><b>✓ En stock</b>La pièce est réservée pour ce rendez-vous. Elle n'est plus proposée aux autres.</div>
+            <div><b>🚚 En commande</b>La livraison arrive avant le rendez-vous : on peut confirmer.</div>
+            <div><b>⏳ Délai trop court</b>Le client se voit proposer une date plus tardive, ou le magasin lance un dépannage chez un confrère.</div>
+          </div>
+          <span><b>Analogie :</b> le stock fonctionne comme un compte bancaire. Chaque rendez-vous signe un chèque (la réservation). Le « disponible », c'est le solde moins les chèques signés. Le délai métropole, c'est la durée d'un virement : on commande avant d'être à découvert.</span>
+        </div>
+        <ul>
+          <li><b>À valider avec le garage :</b> la liste des pièces par prestation, les délais réels des fournisseurs, les seuils minimum.</li>
+          <li><b>Condition de fiabilité :</b> chaque entrée et sortie de pièce doit être enregistrée (scan ou saisie). Un stock mal tenu donne une réponse fausse au client.</li>
+          <li><b>Limite connue :</b> Google Sheets convient pour démarrer et valider le fonctionnement. Si le volume grandit, la même logique passera sur une vraie base de données sans changer les habitudes de l'équipe.</li>
+        </ul>
+      </div></article>
+
+      <article class="step"><div class="num">4</div><div class="body">
+        <div class="top"><h3>Rendez-vous confirmé par la secrétaire</h3><span class="st ok">Testé</span></div>
+        <div class="meta"><span><b>Qui :</b> la secrétaire</span><span><b>Déclencheur :</b> statut « Confirmé »</span></div>
+        <ul>
+          <li>Les demandes « à confirmer » apparaissent dans un onglet dédié.</li>
+          <li>Un clic sur « Confirmé » envoie le SMS automatiquement, depuis le téléphone du garage.</li>
+          <li>Anti-doublon : le client ne reçoit jamais deux fois la même confirmation.</li>
+        </ul>
+      </div></article>
+
+      <article class="step"><div class="num">5</div><div class="body">
+        <div class="top"><h3>SMS de rappel la veille</h3><span class="st ok">Testé</span></div>
+        <div class="meta"><span><b>Qui :</b> automatique</span><span><b>Quand :</b> chaque soir à 17h · le vendredi prépare le lundi</span></div>
+        <div class="sms">TECH'AUTO Kourou : rappel de votre RDV mardi à 08h00 pour Vidange + filtre (AB-123-CD). Répondez OUI pour confirmer ou appelez-nous pour décaler.</div>
+        <p class="gain"><b>Gain :</b> moins de places vides le lendemain. Un créneau libéré la veille peut être proposé à un client en liste d'attente.</p>
+      </div></article>
+    </div>
+  </section>
+
+  <!-- PHASE 2 -->
+  <section class="phase">
+    <div class="phase-head"><h2>Pendant · le véhicule à l'atelier</h2><span>étapes 6 à 8</span></div>
+    <div class="steps">
+
+      <article class="step"><div class="num">6</div><div class="body">
+        <div class="top"><h3>Bouton « Accueil du véhicule »</h3><span class="st demo">Démo</span></div>
+        <div class="meta"><span><b>Qui :</b> la secrétaire ou le chef d'atelier</span><span><b>Durée :</b> environ 2 minutes</span></div>
+        <ul>
+          <li>Le rendez-vous passe en « Arrivé » et une checklist s'affiche : kilométrage, carburant, tour du véhicule avec photos des chocs, objets de valeur, clés étiquetées, accord sur le montant estimé.</li>
+          <li>Le mécanicien voit aussitôt la voiture apparaître comme arrivée sur son planning.</li>
+        </ul>
+        <p class="gain"><b>Analogie :</b> c'est l'état des lieux d'une location. Deux minutes à l'arrivée évitent un litige au départ.</p>
+      </div></article>
+
+      <article class="step"><div class="num">7</div><div class="body">
+        <div class="top"><h3>Planning de chaque mécanicien, avec l'ordre de réparation et les pièces</h3><span class="st demo">Démo · ordre de réparation à développer</span></div>
+        <div class="meta"><span><b>Qui :</b> le chef d'atelier et les 5 mécaniciens</span><span><b>Support :</b> écran d'atelier ou tablette</span></div>
+        <ul>
+          <li>Une colonne par mécanicien, selon sa spécialité. La hauteur d'un bloc correspond à la durée de l'intervention.</li>
+          <li>Chaque bloc ouvre l'ordre de réparation : travaux demandés, symptômes notés avec les mots du client, pièces réservées et leur emplacement en rayon.</li>
+          <li>Un ⚠️ signale une pièce qui ne sera pas là à temps, avant que le véhicule ne soit sur le pont.</li>
+          <li>Le chef d'atelier réaffecte un véhicule à un autre mécanicien en un clic.</li>
+        </ul>
+        <p class="gain"><b>Gain :</b> le mécanicien ne va plus chercher l'information. Elle vient à lui, avec les pièces déjà prêtes.</p>
+      </div></article>
+
+      <article class="step"><div class="num">8</div><div class="body">
+        <div class="top"><h3>Bouton « Fin d'intervention »</h3><span class="st demo">Démo · facture complète à développer</span></div>
+        <div class="meta"><span><b>Qui :</b> le mécanicien ou le chef d'atelier</span><span><b>Déclencheur :</b> statut « Terminé »</span></div>
+        <ul>
+          <li>La facture est créée automatiquement à partir des prestations et des pièces utilisées.</li>
+          <li>Les pièces réservées sortent du stock toutes seules. Le stock reste juste sans ressaisie.</li>
+          <li>La secrétaire vérifie et ajuste les lignes avant l'envoi, si nécessaire.</li>
+        </ul>
+      </div></article>
+    </div>
+  </section>
+
+  <!-- PHASE 3 -->
+  <section class="phase">
+    <div class="phase-head"><h2>Après · le client repart informé</h2><span>étapes 9 à 11</span></div>
+    <div class="steps">
+
+      <article class="step"><div class="num">9</div><div class="body">
+        <div class="top"><h3>SMS « véhicule prêt »</h3><span class="st ok">Testé</span></div>
+        <div class="meta"><span><b>Qui :</b> automatique</span><span><b>Déclencheur :</b> fin d'intervention</span></div>
+        <div class="sms">TECH'AUTO Kourou : votre Toyota Hilux (AB-123-CD) est prête. Montant : 89 €. Retrait jusqu'à 17h. Merci de votre confiance.</div>
+        <p class="gain"><b>Gain :</b> plus d'appels « c'est prêt ? ». Le client vient au bon moment, le parking se libère plus vite.</p>
+      </div></article>
+
+      <article class="step"><div class="num">10</div><div class="body">
+        <div class="top"><h3>Compte rendu des travaux et réparations à prévoir</h3><span class="st todo">À développer</span></div>
+        <div class="meta"><span><b>Qui :</b> le mécanicien rédige, la secrétaire présente</span><span><b>Support :</b> fiche remise au client et envoyée par lien</span></div>
+        <ul>
+          <li>Ce qui a été fait, en langage clair, avec les photos prises pendant l'intervention.</li>
+          <li>Ce qu'il faudra prévoir, classé par urgence : à faire maintenant, dans 3 mois, à la prochaine révision. Par exemple : « Plaquettes arrière usées à 30 % ».</li>
+          <li>Chaque travail à prévoir devient un rappel automatique le moment venu, avec un lien pour réserver.</li>
+        </ul>
+        <p class="gain"><b>Gain :</b> le client comprend ce qu'il paie et fait confiance. Les travaux à prévoir deviennent le chiffre d'affaires des mois suivants.</p>
+      </div></article>
+
+      <article class="step"><div class="num">11</div><div class="body">
+        <div class="top"><h3>Paiement de la facture et envoi au logiciel comptable</h3><span class="st todo">À développer</span></div>
+        <div class="meta"><span><b>Qui :</b> la secrétaire, puis automatique</span><span><b>Déclencheur :</b> statut « Facturé / payé »</span></div>
+        <ul>
+          <li>Le client règle au comptoir (carte, espèces, virement) ou par un lien de paiement reçu par SMS.</li>
+          <li>La facture payée part automatiquement vers le logiciel comptable du garage. Le format sera adapté au logiciel utilisé.</li>
+          <li>Le tableau de bord du PDG se met à jour : chiffre d'affaires du jour, factures en attente de paiement.</li>
+          <li>Mention à faire figurer sur la facture : « TVA non applicable, art. 294 du CGI ». À faire valider par l'expert-comptable du garage.</li>
+        </ul>
+      </div></article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Qui fait quoi</h2>
+    <p class="lead">Chaque personne du garage n'a que son morceau du parcours à gérer. L'application fait les transmissions.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Rôle</th><th>Ses étapes</th><th>Ce que l'application lui évite</th></tr></thead>
+      <tbody>
+        <tr><td>Client</td><td>1 · 9 · 10 · 11</td><td>Attendre au téléphone, rappeler pour savoir si c'est prêt, oublier son rendez-vous</td></tr>
+        <tr><td>Secrétaire</td><td>2 · 4 · 6 · 10 · 11</td><td>Le double cahier, les rappels à la main, la facture ressaisie</td></tr>
+        <tr><td>Responsable pièces</td><td>3 · 7</td><td>Découvrir qu'une pièce manque le matin même</td></tr>
+        <tr><td>Chef d'atelier</td><td>6 · 7 · 8</td><td>Distribuer le travail de vive voix, chercher qui est libre</td></tr>
+        <tr><td>Mécaniciens (×5)</td><td>7 · 8 · 10</td><td>Chercher l'ordre de réparation et les pièces</td></tr>
+        <tr><td>PDG</td><td>Vue d'ensemble</td><td>Attendre la fin du mois pour connaître le remplissage et le chiffre d'affaires</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>La base de données au centre</h2>
+    <div class="data">
+      <article><h3>Aujourd'hui : Google Sheets</h3>
+        <ul>
+          <li>Onglets : rendez-vous, SMS, modèles de messages, pièces, réservations, commandes, mouvements de stock, contacts confrères.</li>
+          <li>Les SMS partent depuis un téléphone Android du garage, avec sa carte SIM et son numéro. Aucun SMS avant 7h ni après 20h.</li>
+          <li>L'équipe peut tout consulter et corriger dans un outil qu'elle connaît déjà.</li>
+        </ul></article>
+      <article><h3>Demain, si le garage grandit</h3>
+        <ul>
+          <li>Passage vers une base de données dédiée, avec la même logique et les mêmes écrans.</li>
+          <li>Accès par rôle : chacun ne voit que ce qui le concerne.</li>
+          <li>Historique complet par véhicule, sur plusieurs années.</li>
+        </ul></article>
+    </div>
+  </section>
+
+</main>
+
+<footer><div class="wrap"><span>Document de présentation · Automatisation Consciente · Kourou</span><span>Les étapes « À développer » sont à chiffrer après l'audit du garage.</span></div></footer>
+</body>
+</html>
