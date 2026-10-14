@@ -361,10 +361,10 @@ code.mono{font-size:.8rem;background:var(--sunk);padding:1px 5px;border-radius:4
       <ul>
         <li>Devis validé avec vous avant toute intervention supplémentaire</li>
         <li>Rappel SMS la veille du rendez-vous</li>
-        <li>5 mécaniciens et un chef d'atelier à votre service</li>
+        <li>4 mécaniciens, un chef d'atelier et un magasinier à votre service</li>
       </ul>
       <div class="hours">
-        <span class="label">Lun – ven</span><span class="mono">7h30 – 12h00 · 13h30 – 17h00</span>
+        <span class="label">Lun – ven</span><span class="mono">7h30 – 12h00 · 14h00 – 17h00</span>
         <span class="label">Adresse</span><span>Kourou, Guyane</span>
       </div>
       <p class="tip"><b>Conseil d'atelier :</b> sous notre climat, la climatisation travaille toute l'année. Une vérification annuelle évite la panne en pleine saison sèche.</p>
@@ -390,7 +390,7 @@ code.mono{font-size:.8rem;background:var(--sunk);padding:1px 5px;border-radius:4
         <li><b>Plaque</b> <q>Quelle est l'immatriculation du véhicule ?</q><br><span class="muted small">On retrouve l'historique du client.</span></li>
         <li><b>Le besoin</b> <q>Qu'est-ce qui vous amène : entretien ou souci précis ?</q></li>
         <li><b>Le symptôme</b> <q>Depuis quand ? Bruit, voyant, odeur ?</q><br><span class="muted small">Notez ses mots exacts : le mécano gagne du temps.</span></li>
-        <li><b>Le créneau</b> <q>Je vous propose mardi 8h ou jeudi 13h30.</q><br><span class="muted small">Proposez deux choix, pas une question ouverte.</span></li>
+        <li><b>Le créneau</b> <q>Je vous propose mardi 8h ou jeudi 14h.</q><br><span class="muted small">Proposez deux choix, pas une question ouverte.</span></li>
         <li><b>Le contact</b> <q>Un portable pour le rappel SMS ?</q></li>
       </ol>
       <p class="tip">Terminez par la reformulation : jour, heure, prestation, prix indicatif. Le client repart avec une image claire.</p>
@@ -405,11 +405,11 @@ code.mono{font-size:.8rem;background:var(--sunk);padding:1px 5px;border-radius:4
 <script>
 /* ---------- Données de référence ---------- */
 const MECAS=[
-  {id:'m1',nom:'Kévin',spec:'Freinage · pneus'},
-  {id:'m2',nom:'Jean-Marc',spec:'Moteur · distribution'},
-  {id:'m3',nom:'Ruddy',spec:'Clim · électricité'},
-  {id:'m4',nom:'Samuel',spec:'Entretien courant'},
-  {id:'m5',nom:'Dylan',spec:'Diagnostic électronique'}
+  // Même équipe et mêmes identifiants que le DMS (Paramètres → Équipe). Remplacée par la vraie liste quand PLANNING_URL est renseignée.
+  {id:'meca1',nom:'Mécano 1',spec:'Entretien · freinage · pneus'},
+  {id:'meca2',nom:'Mécano 2',spec:'Moteur · diesel · distribution'},
+  {id:'meca3',nom:'Mécano 3',spec:'Clim · électricité · diagnostic'},
+  {id:'meca4',nom:'Mécano 4',spec:'4x4 · trains roulants'}
 ];
 const PRESTA=[
   {id:'vid',label:'Vidange + filtre',desc:'Huile moteur et filtre à huile',dur:60,prix:89,pc:[['HUILE-5W30',5],['FH-UNIV',1]]},
@@ -428,7 +428,7 @@ const RECEP=['Kilométrage relevé','Niveau de carburant noté','Tour du véhicu
 const MODELES=['Toyota Hilux','Dacia Duster','Renault Clio','Peugeot 208','Toyota Yaris','Nissan Navara','Suzuki Jimny','Ford Ranger','Kia Picanto','Citroën C3','Mitsubishi L200','Renault Kangoo'];
 const NOMS=['Marie Léandre','Jordan Pindard','Sandra Ho-Kong','Wilfried Aubin','Céline Rosamond','Thomas Nguyen','Fabrice Belony','Anaïs Lucas','Steeve Mathurin','Kelly Edwige','Patrice Labonne','Aurélie Sinaï','Jean Bérard','Ruth Galmot','Christophe Lony','Nadège Théodose','Yannick Polony','Laura Félix'];
 const SYMPT=['','','','Bruit en freinant','Clim souffle tiède','Voyant moteur allumé','Vibration à 90 km/h',''];
-const AM0=450,AM1=720,PM0=810,PM1=1020,DAYCAP=480*MECAS.length;
+const AM0=450,AM1=720,PM0=840,PM1=1020;let DAYCAP=(AM1-AM0+PM1-PM0)*MECAS.length;
 
 /* ---------- Outils ---------- */
 const $=s=>document.querySelector(s);
@@ -502,6 +502,7 @@ const MAINTDONE={};
    Analogie : le stock est un compte bancaire.
    Stock = le solde · Réservations des RDV = les chèques déjà signés · Disponible = solde − chèques
    Délai métropole = la durée d'un virement : on commande AVANT d'être à découvert, pas le jour où on l'est. */
+let LIVE=false; // true quand l'appli lit le vrai planning du DMS
 const MARGE=5; // jours ajoutés au délai fournisseur (douane, octroi de mer, fret retardé)
 const STOCK=[
   {ref:'HUILE-5W30',ean:'3267025010021',des:'Huile moteur 5W30',u:'L',orig:'Local',delai:2,seuil:20,prix:9.5,empl:'A1',four:'Lubrifiants Cayenne'},
@@ -560,7 +561,7 @@ function analyse(){
   return F;
 }
 // Une nouvelle réservation ne peut prendre que le « disponible » (solde − chèques déjà signés)
-function pieceCheck(presta,day){const n=needs(presta),res=reservations();
+function pieceCheck(presta,day){if(LIVE)return[];const n=needs(presta),res=reservations();
   return Object.keys(n).map(ref=>{const s=SK[ref],tot=s.delai+MARGE;
     const promis=res.filter(x=>x.ref===ref).reduce((a,x)=>a+x.q,0);
     const arr=CMDS.filter(c=>c.ref===ref&&c.statut==='En cours'&&c.arrivee<=day).reduce((a,c)=>a+c.q,0);
@@ -798,17 +799,18 @@ function book(w){const tel=w.source==='téléphone';
 }
 function fmtPlate(v){const s=v.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);if(!/^[A-Z]{2}/.test(s))return s;return s.slice(0,2)+(s.length>2?'-'+s.slice(2,5):'')+(s.length>5?'-'+s.slice(5):'')}
 
-/* ---------- Envoi au Google Sheet du garage ----------
-   Coller ici l'URL de l'application web Apps Script (se termine par /exec).
-   Vide = démo seule, rien ne part. La demande client utilise l'action « demande » :
-   pas de jeton dans la page publique, le script force le statut « À confirmer ». */
+/* ---------- Envoi de la demande au garage ----------
+   SHEET_URL : URL du webhook n8n de production (…/webhook/rdv-techauto). n8n relaie vers le DMS
+   (POST /api/ext/rdv) : client, véhicule, OR et réservation des pièces sont créés, le RDV apparaît
+   « À confirmer » sur le planning du secrétariat (DMS → Planning RDV). Voir techauto-dms/API-N8N.md.
+   Vide = démo seule, rien ne part. Pas de jeton dans la page publique : le DMS force « À confirmer ». */
 const SHEET_URL='';
 const heureSheet=m=>`${pad(Math.floor(m/60))}h${pad(m%60)}`;
 const piecesTxt=presta=>Object.entries(needs(presta)).map(([ref,q])=>ref+(q!==1?' x'+q:'')).join('; ');
 async function envoyerDemande(r,sms){
   if(!SHEET_URL)return;
   const rdv={ref:r.code,date:r.date,heure:heureSheet(r.start),client:r.client.nom,tel:r.client.tel,email:r.client.email||'',plaque:r.veh.plaque,vehicule:r.veh.modele,km:r.veh.km||'',
-    prestation:prestaTxt(r),symptome:r.sympt||'',mode:r.mode,pieces:piecesTxt(r.presta),sms};
+    prestation:prestaTxt(r),prestaIds:r.presta,meca:LIVE?r.meca:'',duree:r.dur,canal:'en ligne',symptome:r.sympt||'',mode:r.mode,pieces:piecesTxt(r.presta),sms};
   try{
     // text/plain : requête « simple », pas de pré-vérification CORS (voir passation § 6)
     const res=await fetch(SHEET_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'demande',rdv})});
@@ -1338,6 +1340,25 @@ document.addEventListener('change',e=>{
 document.addEventListener('submit',e=>{if(e.target.id==='scanf'){e.preventDefault();doScan($('#scan-code').value)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(!$('#drawer').hidden||!$('#modal').hidden||!$('#urg').hidden))closeAll()});
 renderWiz(wizC);setMode(S.mode);
+
+/* ---------- Branchement au planning du DMS (production) ----------
+   PLANNING_URL : webhook n8n (GET) qui relaie GET /api/ext/planning du DMS (aucune donnée client :
+   seulement les mécaniciens et les places déjà prises). Vide = démo avec données fictives.
+   Rempli = vrais créneaux libres ; l'espace Secrétariat est masqué (il vit dans le DMS). */
+const PLANNING_URL='';
+(async function brancherDMS(){
+  if(!PLANNING_URL)return;
+  try{
+    const j=await(await fetch(PLANNING_URL+(PLANNING_URL.includes('?')?'&':'?')+'du='+TODAY,{cache:'no-store'})).json();
+    if(!j.mecanos||!j.mecanos.length)throw new Error('planning vide');
+    const mn=h=>{const m=String(h).match(/(\d{1,2})\D(\d{2})/);return m?+m[1]*60+ +m[2]:0};
+    MECAS.splice(0,MECAS.length,...j.mecanos);DAYCAP=(AM1-AM0+PM1-PM0)*MECAS.length;
+    RDVS=(j.occupation||[]).map((o,i)=>({id:-(i+1),date:o.date,start:mn(o.heure),dur:+o.duree||60,meca:o.meca,statut:'confirme',presta:[],client:{nom:''},veh:{plaque:'',modele:''},recep:{}}));
+    LIVE=true;S.mode='client';
+    document.querySelector('.switch').hidden=true;document.querySelector('.demo-tag').hidden=true;
+    wizC=newWiz('en ligne','#client-wiz');setMode('client');
+  }catch(e){console.warn('Planning du garage indisponible : mode démo',e)}
+})();
 </script>
 </body>
 </html>

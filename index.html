@@ -565,7 +565,9 @@ footer{background:#0a1016;color:var(--on-dark-muted);padding:56px 0 100px;font-s
 })();
 
 // ===== Formulaire RDV =====
-// Pour brancher l'app de RDV : coller ici l'URL d'un Google Apps Script (doPost) ou d'un webhook.
+// « Être rappelé » : coller ici l'URL du webhook n8n (le même que l'appli RDV : …/webhook/rdv-techauto).
+// n8n relaie vers le DMS (POST /api/ext/rdv, action « rappel ») : la demande apparaît dans
+// DMS → Planning RDV → « Demandes de rappel », avec un bouton pour la placer au planning.
 const ENDPOINT = '';
 document.getElementById('rdvForm').addEventListener('submit', async e=>{
   e.preventDefault();
@@ -576,7 +578,7 @@ document.getElementById('rdvForm').addEventListener('submit', async e=>{
   const data=Object.fromEntries(new FormData(f));
   data.recu_le=new Date().toISOString();
   if(ENDPOINT){
-    try{await fetch(ENDPOINT,{method:'POST',mode:'no-cors',body:JSON.stringify(data)});}catch(err){}
+    try{await fetch(ENDPOINT,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'rappel',rappel:data})});}catch(err){}
   }
   f.reset();
   const ok=document.getElementById('formOk'); ok.style.display='block'; ok.scrollIntoView({behavior:'smooth',block:'center'});
